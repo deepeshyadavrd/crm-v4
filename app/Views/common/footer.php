@@ -121,7 +121,7 @@ $('#product_search').on('keyup', function() {
             data: { term: query },
             success: function(data) {
               // console.log(data);
-                let products = JSON.parse(data);
+                let products = data;
                 let html = '<div class="row">';
 
                 if (products.length > 0) {

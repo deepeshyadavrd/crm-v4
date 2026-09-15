@@ -1,0 +1,559 @@
+DEBUG - 2026-09-15 05:45:23 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 05:45:24 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 05:45:44 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 05:45:44 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 05:45:50 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 05:45:57 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 06:14:32 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 06:14:34 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 06:14:35 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 06:14:36 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 06:14:38 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 06:16:20 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 06:16:23 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 06:16:23 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 06:16:26 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 06:16:26 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 06:18:59 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 07:00:58 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 07:10:01 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+ERROR - 2026-09-15 07:10:01 --> You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near '%test%
+AND `rc`.`date_added` > '2026-08-16'
+ORDER BY `rc`.`date_added` DESC
+ ...' at line 4
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 300.
+ 1 SYSTEMPATH\Database\MySQLi\Connection.php(300): mysqli->query('SELECT `rc`.`request_callback_id`, `rc`.`name`, `rc`.`email`, `rc`.`mobile`, `rc`.`state`, `rc`.`stage`, `rc`.`status`, `rc`.`date_added`, `rc`.`tracking_data`
+FROM `oc_request_callback` `rc`
+LEFT JOIN `lead_assign` `la` ON `la`.`lead_id` = `rc`.`request_callback_id`
+WHERE rc.name NOT LIKE %test%
+AND `rc`.`date_added` > \'2026-08-16\'
+ORDER BY `rc`.`date_added` DESC
+ LIMIT 15', 0)
+ 2 SYSTEMPATH\Database\BaseConnection.php(908): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `rc`.`request_callback_id`, `rc`.`name`, `rc`.`email`, `rc`.`mobile`, `rc`.`state`, `rc`.`stage`, `rc`.`status`, `rc`.`date_added`, `rc`.`tracking_data`
+FROM `oc_request_callback` `rc`
+LEFT JOIN `lead_assign` `la` ON `la`.`lead_id` = `rc`.`request_callback_id`
+WHERE rc.name NOT LIKE %test%
+AND `rc`.`date_added` > \'2026-08-16\'
+ORDER BY `rc`.`date_added` DESC
+ LIMIT 15')
+ 3 SYSTEMPATH\Database\BaseConnection.php(825): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `rc`.`request_callback_id`, `rc`.`name`, `rc`.`email`, `rc`.`mobile`, `rc`.`state`, `rc`.`stage`, `rc`.`status`, `rc`.`date_added`, `rc`.`tracking_data`
+FROM `oc_request_callback` `rc`
+LEFT JOIN `lead_assign` `la` ON `la`.`lead_id` = `rc`.`request_callback_id`
+WHERE rc.name NOT LIKE %test%
+AND `rc`.`date_added` > \'2026-08-16\'
+ORDER BY `rc`.`date_added` DESC
+ LIMIT 15')
+ 4 SYSTEMPATH\Database\BaseBuilder.php(1659): CodeIgniter\Database\BaseConnection->query('SELECT `rc`.`request_callback_id`, `rc`.`name`, `rc`.`email`, `rc`.`mobile`, `rc`.`state`, `rc`.`stage`, `rc`.`status`, `rc`.`date_added`, `rc`.`tracking_data`
+FROM `oc_request_callback` `rc`
+LEFT JOIN `lead_assign` `la` ON `la`.`lead_id` = `rc`.`request_callback_id`
+WHERE rc.name NOT LIKE :rc.name:
+AND `rc`.`date_added` > :rc.date_added:
+ORDER BY `rc`.`date_added` DESC
+ LIMIT 15', [...], false)
+ 5 APPPATH\Models\LeadsModel.php(172): CodeIgniter\Database\BaseBuilder->get()
+ 6 APPPATH\Controllers\Leads.php(116): App\Models\LeadsModel->getLeads(15, 0, 0, [...])
+ 7 SYSTEMPATH\CodeIgniter.php(974): App\Controllers\Leads->index()
+ 8 SYSTEMPATH\CodeIgniter.php(520): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Leads))
+ 9 SYSTEMPATH\CodeIgniter.php(363): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+10 SYSTEMPATH\Boot.php(417): CodeIgniter\CodeIgniter->run()
+11 SYSTEMPATH\Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+12 FCPATH\index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2026-09-15 07:10:01 --> CodeIgniter\Database\Exceptions\DatabaseException: You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near '%test%
+AND `rc`.`date_added` > '2026-08-16'
+ORDER BY `rc`.`date_added` DESC
+ ...' at line 4
+[Method: GET, Route: leads]
+in SYSTEMPATH\Database\BaseConnection.php on line 863.
+ 1 SYSTEMPATH\Database\BaseBuilder.php(1659): CodeIgniter\Database\BaseConnection->query('SELECT `rc`.`request_callback_id`, `rc`.`name`, `rc`.`email`, `rc`.`mobile`, `rc`.`state`, `rc`.`stage`, `rc`.`status`, `rc`.`date_added`, `rc`.`tracking_data`
+FROM `oc_request_callback` `rc`
+LEFT JOIN `lead_assign` `la` ON `la`.`lead_id` = `rc`.`request_callback_id`
+WHERE rc.name NOT LIKE :rc.name:
+AND `rc`.`date_added` > :rc.date_added:
+ORDER BY `rc`.`date_added` DESC
+ LIMIT 15', [...], false)
+ 2 APPPATH\Models\LeadsModel.php(172): CodeIgniter\Database\BaseBuilder->get()
+ 3 APPPATH\Controllers\Leads.php(116): App\Models\LeadsModel->getLeads(15, 0, 0, [...])
+ 4 SYSTEMPATH\CodeIgniter.php(974): App\Controllers\Leads->index()
+ 5 SYSTEMPATH\CodeIgniter.php(520): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Leads))
+ 6 SYSTEMPATH\CodeIgniter.php(363): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 7 SYSTEMPATH\Boot.php(417): CodeIgniter\CodeIgniter->run()
+ 8 SYSTEMPATH\Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 9 FCPATH\index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2026-09-15 07:10:01 --> [Caused by] CodeIgniter\Database\Exceptions\DatabaseException: You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near '%test%
+AND `rc`.`date_added` > '2026-08-16'
+ORDER BY `rc`.`date_added` DESC
+ ...' at line 4
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 310.
+ 1 SYSTEMPATH\Database\BaseConnection.php(908): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `rc`.`request_callback_id`, `rc`.`name`, `rc`.`email`, `rc`.`mobile`, `rc`.`state`, `rc`.`stage`, `rc`.`status`, `rc`.`date_added`, `rc`.`tracking_data`
+FROM `oc_request_callback` `rc`
+LEFT JOIN `lead_assign` `la` ON `la`.`lead_id` = `rc`.`request_callback_id`
+WHERE rc.name NOT LIKE %test%
+AND `rc`.`date_added` > \'2026-08-16\'
+ORDER BY `rc`.`date_added` DESC
+ LIMIT 15')
+ 2 SYSTEMPATH\Database\BaseConnection.php(825): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `rc`.`request_callback_id`, `rc`.`name`, `rc`.`email`, `rc`.`mobile`, `rc`.`state`, `rc`.`stage`, `rc`.`status`, `rc`.`date_added`, `rc`.`tracking_data`
+FROM `oc_request_callback` `rc`
+LEFT JOIN `lead_assign` `la` ON `la`.`lead_id` = `rc`.`request_callback_id`
+WHERE rc.name NOT LIKE %test%
+AND `rc`.`date_added` > \'2026-08-16\'
+ORDER BY `rc`.`date_added` DESC
+ LIMIT 15')
+ 3 SYSTEMPATH\Database\BaseBuilder.php(1659): CodeIgniter\Database\BaseConnection->query('SELECT `rc`.`request_callback_id`, `rc`.`name`, `rc`.`email`, `rc`.`mobile`, `rc`.`state`, `rc`.`stage`, `rc`.`status`, `rc`.`date_added`, `rc`.`tracking_data`
+FROM `oc_request_callback` `rc`
+LEFT JOIN `lead_assign` `la` ON `la`.`lead_id` = `rc`.`request_callback_id`
+WHERE rc.name NOT LIKE :rc.name:
+AND `rc`.`date_added` > :rc.date_added:
+ORDER BY `rc`.`date_added` DESC
+ LIMIT 15', [...], false)
+ 4 APPPATH\Models\LeadsModel.php(172): CodeIgniter\Database\BaseBuilder->get()
+ 5 APPPATH\Controllers\Leads.php(116): App\Models\LeadsModel->getLeads(15, 0, 0, [...])
+ 6 SYSTEMPATH\CodeIgniter.php(974): App\Controllers\Leads->index()
+ 7 SYSTEMPATH\CodeIgniter.php(520): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Leads))
+ 8 SYSTEMPATH\CodeIgniter.php(363): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 9 SYSTEMPATH\Boot.php(417): CodeIgniter\CodeIgniter->run()
+10 SYSTEMPATH\Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+11 FCPATH\index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2026-09-15 07:10:01 --> [Caused by] mysqli_sql_exception: You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near '%test%
+AND `rc`.`date_added` > '2026-08-16'
+ORDER BY `rc`.`date_added` DESC
+ ...' at line 4
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 300.
+ 1 SYSTEMPATH\Database\MySQLi\Connection.php(300): mysqli->query('SELECT `rc`.`request_callback_id`, `rc`.`name`, `rc`.`email`, `rc`.`mobile`, `rc`.`state`, `rc`.`stage`, `rc`.`status`, `rc`.`date_added`, `rc`.`tracking_data`
+FROM `oc_request_callback` `rc`
+LEFT JOIN `lead_assign` `la` ON `la`.`lead_id` = `rc`.`request_callback_id`
+WHERE rc.name NOT LIKE %test%
+AND `rc`.`date_added` > \'2026-08-16\'
+ORDER BY `rc`.`date_added` DESC
+ LIMIT 15', 0)
+ 2 SYSTEMPATH\Database\BaseConnection.php(908): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `rc`.`request_callback_id`, `rc`.`name`, `rc`.`email`, `rc`.`mobile`, `rc`.`state`, `rc`.`stage`, `rc`.`status`, `rc`.`date_added`, `rc`.`tracking_data`
+FROM `oc_request_callback` `rc`
+LEFT JOIN `lead_assign` `la` ON `la`.`lead_id` = `rc`.`request_callback_id`
+WHERE rc.name NOT LIKE %test%
+AND `rc`.`date_added` > \'2026-08-16\'
+ORDER BY `rc`.`date_added` DESC
+ LIMIT 15')
+ 3 SYSTEMPATH\Database\BaseConnection.php(825): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `rc`.`request_callback_id`, `rc`.`name`, `rc`.`email`, `rc`.`mobile`, `rc`.`state`, `rc`.`stage`, `rc`.`status`, `rc`.`date_added`, `rc`.`tracking_data`
+FROM `oc_request_callback` `rc`
+LEFT JOIN `lead_assign` `la` ON `la`.`lead_id` = `rc`.`request_callback_id`
+WHERE rc.name NOT LIKE %test%
+AND `rc`.`date_added` > \'2026-08-16\'
+ORDER BY `rc`.`date_added` DESC
+ LIMIT 15')
+ 4 SYSTEMPATH\Database\BaseBuilder.php(1659): CodeIgniter\Database\BaseConnection->query('SELECT `rc`.`request_callback_id`, `rc`.`name`, `rc`.`email`, `rc`.`mobile`, `rc`.`state`, `rc`.`stage`, `rc`.`status`, `rc`.`date_added`, `rc`.`tracking_data`
+FROM `oc_request_callback` `rc`
+LEFT JOIN `lead_assign` `la` ON `la`.`lead_id` = `rc`.`request_callback_id`
+WHERE rc.name NOT LIKE :rc.name:
+AND `rc`.`date_added` > :rc.date_added:
+ORDER BY `rc`.`date_added` DESC
+ LIMIT 15', [...], false)
+ 5 APPPATH\Models\LeadsModel.php(172): CodeIgniter\Database\BaseBuilder->get()
+ 6 APPPATH\Controllers\Leads.php(116): App\Models\LeadsModel->getLeads(15, 0, 0, [...])
+ 7 SYSTEMPATH\CodeIgniter.php(974): App\Controllers\Leads->index()
+ 8 SYSTEMPATH\CodeIgniter.php(520): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Leads))
+ 9 SYSTEMPATH\CodeIgniter.php(363): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+10 SYSTEMPATH\Boot.php(417): CodeIgniter\CodeIgniter->run()
+11 SYSTEMPATH\Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+12 FCPATH\index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+DEBUG - 2026-09-15 07:10:49 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+ERROR - 2026-09-15 07:10:49 --> You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near '%test%
+AND `rc`.`date_added` > '2026-08-16'
+ORDER BY `rc`.`date_added` DESC
+ ...' at line 4
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 300.
+ 1 SYSTEMPATH\Database\MySQLi\Connection.php(300): mysqli->query('SELECT `rc`.`request_callback_id`, `rc`.`name`, `rc`.`email`, `rc`.`mobile`, `rc`.`state`, `rc`.`stage`, `rc`.`status`, `rc`.`date_added`, `rc`.`tracking_data`
+FROM `oc_request_callback` `rc`
+LEFT JOIN `lead_assign` `la` ON `la`.`lead_id` = `rc`.`request_callback_id`
+WHERE rc.name NOT LIKE %test%
+AND `rc`.`date_added` > \'2026-08-16\'
+ORDER BY `rc`.`date_added` DESC
+ LIMIT 15', 0)
+ 2 SYSTEMPATH\Database\BaseConnection.php(908): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `rc`.`request_callback_id`, `rc`.`name`, `rc`.`email`, `rc`.`mobile`, `rc`.`state`, `rc`.`stage`, `rc`.`status`, `rc`.`date_added`, `rc`.`tracking_data`
+FROM `oc_request_callback` `rc`
+LEFT JOIN `lead_assign` `la` ON `la`.`lead_id` = `rc`.`request_callback_id`
+WHERE rc.name NOT LIKE %test%
+AND `rc`.`date_added` > \'2026-08-16\'
+ORDER BY `rc`.`date_added` DESC
+ LIMIT 15')
+ 3 SYSTEMPATH\Database\BaseConnection.php(825): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `rc`.`request_callback_id`, `rc`.`name`, `rc`.`email`, `rc`.`mobile`, `rc`.`state`, `rc`.`stage`, `rc`.`status`, `rc`.`date_added`, `rc`.`tracking_data`
+FROM `oc_request_callback` `rc`
+LEFT JOIN `lead_assign` `la` ON `la`.`lead_id` = `rc`.`request_callback_id`
+WHERE rc.name NOT LIKE %test%
+AND `rc`.`date_added` > \'2026-08-16\'
+ORDER BY `rc`.`date_added` DESC
+ LIMIT 15')
+ 4 SYSTEMPATH\Database\BaseBuilder.php(1659): CodeIgniter\Database\BaseConnection->query('SELECT `rc`.`request_callback_id`, `rc`.`name`, `rc`.`email`, `rc`.`mobile`, `rc`.`state`, `rc`.`stage`, `rc`.`status`, `rc`.`date_added`, `rc`.`tracking_data`
+FROM `oc_request_callback` `rc`
+LEFT JOIN `lead_assign` `la` ON `la`.`lead_id` = `rc`.`request_callback_id`
+WHERE rc.name NOT LIKE :rc.name:
+AND `rc`.`date_added` > :rc.date_added:
+ORDER BY `rc`.`date_added` DESC
+ LIMIT 15', [...], false)
+ 5 APPPATH\Models\LeadsModel.php(172): CodeIgniter\Database\BaseBuilder->get()
+ 6 APPPATH\Controllers\Leads.php(116): App\Models\LeadsModel->getLeads(15, 0, 0, [...])
+ 7 SYSTEMPATH\CodeIgniter.php(974): App\Controllers\Leads->index()
+ 8 SYSTEMPATH\CodeIgniter.php(520): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Leads))
+ 9 SYSTEMPATH\CodeIgniter.php(363): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+10 SYSTEMPATH\Boot.php(417): CodeIgniter\CodeIgniter->run()
+11 SYSTEMPATH\Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+12 FCPATH\index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2026-09-15 07:10:49 --> CodeIgniter\Database\Exceptions\DatabaseException: You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near '%test%
+AND `rc`.`date_added` > '2026-08-16'
+ORDER BY `rc`.`date_added` DESC
+ ...' at line 4
+[Method: GET, Route: leads]
+in SYSTEMPATH\Database\BaseConnection.php on line 863.
+ 1 SYSTEMPATH\Database\BaseBuilder.php(1659): CodeIgniter\Database\BaseConnection->query('SELECT `rc`.`request_callback_id`, `rc`.`name`, `rc`.`email`, `rc`.`mobile`, `rc`.`state`, `rc`.`stage`, `rc`.`status`, `rc`.`date_added`, `rc`.`tracking_data`
+FROM `oc_request_callback` `rc`
+LEFT JOIN `lead_assign` `la` ON `la`.`lead_id` = `rc`.`request_callback_id`
+WHERE rc.name NOT LIKE :rc.name:
+AND `rc`.`date_added` > :rc.date_added:
+ORDER BY `rc`.`date_added` DESC
+ LIMIT 15', [...], false)
+ 2 APPPATH\Models\LeadsModel.php(172): CodeIgniter\Database\BaseBuilder->get()
+ 3 APPPATH\Controllers\Leads.php(116): App\Models\LeadsModel->getLeads(15, 0, 0, [...])
+ 4 SYSTEMPATH\CodeIgniter.php(974): App\Controllers\Leads->index()
+ 5 SYSTEMPATH\CodeIgniter.php(520): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Leads))
+ 6 SYSTEMPATH\CodeIgniter.php(363): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 7 SYSTEMPATH\Boot.php(417): CodeIgniter\CodeIgniter->run()
+ 8 SYSTEMPATH\Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 9 FCPATH\index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2026-09-15 07:10:49 --> [Caused by] CodeIgniter\Database\Exceptions\DatabaseException: You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near '%test%
+AND `rc`.`date_added` > '2026-08-16'
+ORDER BY `rc`.`date_added` DESC
+ ...' at line 4
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 310.
+ 1 SYSTEMPATH\Database\BaseConnection.php(908): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `rc`.`request_callback_id`, `rc`.`name`, `rc`.`email`, `rc`.`mobile`, `rc`.`state`, `rc`.`stage`, `rc`.`status`, `rc`.`date_added`, `rc`.`tracking_data`
+FROM `oc_request_callback` `rc`
+LEFT JOIN `lead_assign` `la` ON `la`.`lead_id` = `rc`.`request_callback_id`
+WHERE rc.name NOT LIKE %test%
+AND `rc`.`date_added` > \'2026-08-16\'
+ORDER BY `rc`.`date_added` DESC
+ LIMIT 15')
+ 2 SYSTEMPATH\Database\BaseConnection.php(825): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `rc`.`request_callback_id`, `rc`.`name`, `rc`.`email`, `rc`.`mobile`, `rc`.`state`, `rc`.`stage`, `rc`.`status`, `rc`.`date_added`, `rc`.`tracking_data`
+FROM `oc_request_callback` `rc`
+LEFT JOIN `lead_assign` `la` ON `la`.`lead_id` = `rc`.`request_callback_id`
+WHERE rc.name NOT LIKE %test%
+AND `rc`.`date_added` > \'2026-08-16\'
+ORDER BY `rc`.`date_added` DESC
+ LIMIT 15')
+ 3 SYSTEMPATH\Database\BaseBuilder.php(1659): CodeIgniter\Database\BaseConnection->query('SELECT `rc`.`request_callback_id`, `rc`.`name`, `rc`.`email`, `rc`.`mobile`, `rc`.`state`, `rc`.`stage`, `rc`.`status`, `rc`.`date_added`, `rc`.`tracking_data`
+FROM `oc_request_callback` `rc`
+LEFT JOIN `lead_assign` `la` ON `la`.`lead_id` = `rc`.`request_callback_id`
+WHERE rc.name NOT LIKE :rc.name:
+AND `rc`.`date_added` > :rc.date_added:
+ORDER BY `rc`.`date_added` DESC
+ LIMIT 15', [...], false)
+ 4 APPPATH\Models\LeadsModel.php(172): CodeIgniter\Database\BaseBuilder->get()
+ 5 APPPATH\Controllers\Leads.php(116): App\Models\LeadsModel->getLeads(15, 0, 0, [...])
+ 6 SYSTEMPATH\CodeIgniter.php(974): App\Controllers\Leads->index()
+ 7 SYSTEMPATH\CodeIgniter.php(520): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Leads))
+ 8 SYSTEMPATH\CodeIgniter.php(363): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 9 SYSTEMPATH\Boot.php(417): CodeIgniter\CodeIgniter->run()
+10 SYSTEMPATH\Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+11 FCPATH\index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2026-09-15 07:10:49 --> [Caused by] mysqli_sql_exception: You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near '%test%
+AND `rc`.`date_added` > '2026-08-16'
+ORDER BY `rc`.`date_added` DESC
+ ...' at line 4
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 300.
+ 1 SYSTEMPATH\Database\MySQLi\Connection.php(300): mysqli->query('SELECT `rc`.`request_callback_id`, `rc`.`name`, `rc`.`email`, `rc`.`mobile`, `rc`.`state`, `rc`.`stage`, `rc`.`status`, `rc`.`date_added`, `rc`.`tracking_data`
+FROM `oc_request_callback` `rc`
+LEFT JOIN `lead_assign` `la` ON `la`.`lead_id` = `rc`.`request_callback_id`
+WHERE rc.name NOT LIKE %test%
+AND `rc`.`date_added` > \'2026-08-16\'
+ORDER BY `rc`.`date_added` DESC
+ LIMIT 15', 0)
+ 2 SYSTEMPATH\Database\BaseConnection.php(908): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `rc`.`request_callback_id`, `rc`.`name`, `rc`.`email`, `rc`.`mobile`, `rc`.`state`, `rc`.`stage`, `rc`.`status`, `rc`.`date_added`, `rc`.`tracking_data`
+FROM `oc_request_callback` `rc`
+LEFT JOIN `lead_assign` `la` ON `la`.`lead_id` = `rc`.`request_callback_id`
+WHERE rc.name NOT LIKE %test%
+AND `rc`.`date_added` > \'2026-08-16\'
+ORDER BY `rc`.`date_added` DESC
+ LIMIT 15')
+ 3 SYSTEMPATH\Database\BaseConnection.php(825): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `rc`.`request_callback_id`, `rc`.`name`, `rc`.`email`, `rc`.`mobile`, `rc`.`state`, `rc`.`stage`, `rc`.`status`, `rc`.`date_added`, `rc`.`tracking_data`
+FROM `oc_request_callback` `rc`
+LEFT JOIN `lead_assign` `la` ON `la`.`lead_id` = `rc`.`request_callback_id`
+WHERE rc.name NOT LIKE %test%
+AND `rc`.`date_added` > \'2026-08-16\'
+ORDER BY `rc`.`date_added` DESC
+ LIMIT 15')
+ 4 SYSTEMPATH\Database\BaseBuilder.php(1659): CodeIgniter\Database\BaseConnection->query('SELECT `rc`.`request_callback_id`, `rc`.`name`, `rc`.`email`, `rc`.`mobile`, `rc`.`state`, `rc`.`stage`, `rc`.`status`, `rc`.`date_added`, `rc`.`tracking_data`
+FROM `oc_request_callback` `rc`
+LEFT JOIN `lead_assign` `la` ON `la`.`lead_id` = `rc`.`request_callback_id`
+WHERE rc.name NOT LIKE :rc.name:
+AND `rc`.`date_added` > :rc.date_added:
+ORDER BY `rc`.`date_added` DESC
+ LIMIT 15', [...], false)
+ 5 APPPATH\Models\LeadsModel.php(172): CodeIgniter\Database\BaseBuilder->get()
+ 6 APPPATH\Controllers\Leads.php(116): App\Models\LeadsModel->getLeads(15, 0, 0, [...])
+ 7 SYSTEMPATH\CodeIgniter.php(974): App\Controllers\Leads->index()
+ 8 SYSTEMPATH\CodeIgniter.php(520): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Leads))
+ 9 SYSTEMPATH\CodeIgniter.php(363): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+10 SYSTEMPATH\Boot.php(417): CodeIgniter\CodeIgniter->run()
+11 SYSTEMPATH\Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+12 FCPATH\index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+DEBUG - 2026-09-15 07:18:19 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 07:18:22 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 07:18:26 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 07:18:28 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 07:21:22 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 07:21:24 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 07:22:47 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 07:22:49 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 07:22:55 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 07:22:57 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 07:23:45 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 07:23:46 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 07:31:20 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 07:31:23 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 07:31:38 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 07:31:41 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 07:31:43 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 07:31:45 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 07:32:01 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 07:32:03 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 07:32:13 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 07:32:15 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 07:33:09 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 07:33:11 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 07:33:21 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 07:33:23 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 07:34:42 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 07:34:44 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 07:35:56 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 07:35:59 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 07:36:08 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 07:36:10 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:15:30 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:15:33 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:17:41 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:17:42 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:21:51 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:21:53 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:23:15 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+ERROR - 2026-09-15 08:23:15 --> Unknown column 'u.firstname' in 'field list'
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 300.
+ 1 SYSTEMPATH\Database\MySQLi\Connection.php(300): mysqli->query('SELECT `rc`.`request_callback_id`, `rc`.`name`, `rc`.`email`, `rc`.`mobile`, `rc`.`state`, `rc`.`stage`, `rc`.`status`, `rc`.`date_added`, `rc`.`tracking_data`, `la`.`user_id` AS `assigned_user_id`, CONCAT(u.firstname, " ", u.lastname) AS assignedto
+FROM `oc_request_callback` `rc`
+LEFT JOIN `lead_assign` `la` ON `la`.`lead_id` = `rc`.`request_callback_id`
+WHERE `rc`.`name` NOT LIKE \'%test%\' ESCAPE \'!\'
+AND `rc`.`date_added` > \'2026-08-16\'
+ORDER BY `rc`.`date_added` DESC', 0)
+ 2 SYSTEMPATH\Database\BaseConnection.php(908): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `rc`.`request_callback_id`, `rc`.`name`, `rc`.`email`, `rc`.`mobile`, `rc`.`state`, `rc`.`stage`, `rc`.`status`, `rc`.`date_added`, `rc`.`tracking_data`, `la`.`user_id` AS `assigned_user_id`, CONCAT(u.firstname, " ", u.lastname) AS assignedto
+FROM `oc_request_callback` `rc`
+LEFT JOIN `lead_assign` `la` ON `la`.`lead_id` = `rc`.`request_callback_id`
+WHERE `rc`.`name` NOT LIKE \'%test%\' ESCAPE \'!\'
+AND `rc`.`date_added` > \'2026-08-16\'
+ORDER BY `rc`.`date_added` DESC')
+ 3 SYSTEMPATH\Database\BaseConnection.php(825): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `rc`.`request_callback_id`, `rc`.`name`, `rc`.`email`, `rc`.`mobile`, `rc`.`state`, `rc`.`stage`, `rc`.`status`, `rc`.`date_added`, `rc`.`tracking_data`, `la`.`user_id` AS `assigned_user_id`, CONCAT(u.firstname, " ", u.lastname) AS assignedto
+FROM `oc_request_callback` `rc`
+LEFT JOIN `lead_assign` `la` ON `la`.`lead_id` = `rc`.`request_callback_id`
+WHERE `rc`.`name` NOT LIKE \'%test%\' ESCAPE \'!\'
+AND `rc`.`date_added` > \'2026-08-16\'
+ORDER BY `rc`.`date_added` DESC')
+ 4 SYSTEMPATH\Database\BaseBuilder.php(1659): CodeIgniter\Database\BaseConnection->query('SELECT `rc`.`request_callback_id`, `rc`.`name`, `rc`.`email`, `rc`.`mobile`, `rc`.`state`, `rc`.`stage`, `rc`.`status`, `rc`.`date_added`, `rc`.`tracking_data`, `la`.`user_id` AS `assigned_user_id`, CONCAT(u.firstname, " ", u.lastname) AS assignedto
+FROM `oc_request_callback` `rc`
+LEFT JOIN `lead_assign` `la` ON `la`.`lead_id` = `rc`.`request_callback_id`
+WHERE `rc`.`name` NOT LIKE :rc.name: ESCAPE \'!\'
+AND `rc`.`date_added` > :rc.date_added:
+ORDER BY `rc`.`date_added` DESC', [...], false)
+ 5 APPPATH\Models\LeadsModel.php(187): CodeIgniter\Database\BaseBuilder->get()
+ 6 APPPATH\Controllers\Leads.php(116): App\Models\LeadsModel->getLeads(15, 0, 0, [...])
+ 7 SYSTEMPATH\CodeIgniter.php(974): App\Controllers\Leads->index()
+ 8 SYSTEMPATH\CodeIgniter.php(520): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Leads))
+ 9 SYSTEMPATH\CodeIgniter.php(363): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+10 SYSTEMPATH\Boot.php(417): CodeIgniter\CodeIgniter->run()
+11 SYSTEMPATH\Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+12 FCPATH\index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2026-09-15 08:23:15 --> CodeIgniter\Database\Exceptions\DatabaseException: Unknown column 'u.firstname' in 'field list'
+[Method: GET, Route: leads]
+in SYSTEMPATH\Database\BaseConnection.php on line 863.
+ 1 SYSTEMPATH\Database\BaseBuilder.php(1659): CodeIgniter\Database\BaseConnection->query('SELECT `rc`.`request_callback_id`, `rc`.`name`, `rc`.`email`, `rc`.`mobile`, `rc`.`state`, `rc`.`stage`, `rc`.`status`, `rc`.`date_added`, `rc`.`tracking_data`, `la`.`user_id` AS `assigned_user_id`, CONCAT(u.firstname, " ", u.lastname) AS assignedto
+FROM `oc_request_callback` `rc`
+LEFT JOIN `lead_assign` `la` ON `la`.`lead_id` = `rc`.`request_callback_id`
+WHERE `rc`.`name` NOT LIKE :rc.name: ESCAPE \'!\'
+AND `rc`.`date_added` > :rc.date_added:
+ORDER BY `rc`.`date_added` DESC', [...], false)
+ 2 APPPATH\Models\LeadsModel.php(187): CodeIgniter\Database\BaseBuilder->get()
+ 3 APPPATH\Controllers\Leads.php(116): App\Models\LeadsModel->getLeads(15, 0, 0, [...])
+ 4 SYSTEMPATH\CodeIgniter.php(974): App\Controllers\Leads->index()
+ 5 SYSTEMPATH\CodeIgniter.php(520): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Leads))
+ 6 SYSTEMPATH\CodeIgniter.php(363): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 7 SYSTEMPATH\Boot.php(417): CodeIgniter\CodeIgniter->run()
+ 8 SYSTEMPATH\Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 9 FCPATH\index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2026-09-15 08:23:15 --> [Caused by] CodeIgniter\Database\Exceptions\DatabaseException: Unknown column 'u.firstname' in 'field list'
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 310.
+ 1 SYSTEMPATH\Database\BaseConnection.php(908): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `rc`.`request_callback_id`, `rc`.`name`, `rc`.`email`, `rc`.`mobile`, `rc`.`state`, `rc`.`stage`, `rc`.`status`, `rc`.`date_added`, `rc`.`tracking_data`, `la`.`user_id` AS `assigned_user_id`, CONCAT(u.firstname, " ", u.lastname) AS assignedto
+FROM `oc_request_callback` `rc`
+LEFT JOIN `lead_assign` `la` ON `la`.`lead_id` = `rc`.`request_callback_id`
+WHERE `rc`.`name` NOT LIKE \'%test%\' ESCAPE \'!\'
+AND `rc`.`date_added` > \'2026-08-16\'
+ORDER BY `rc`.`date_added` DESC')
+ 2 SYSTEMPATH\Database\BaseConnection.php(825): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `rc`.`request_callback_id`, `rc`.`name`, `rc`.`email`, `rc`.`mobile`, `rc`.`state`, `rc`.`stage`, `rc`.`status`, `rc`.`date_added`, `rc`.`tracking_data`, `la`.`user_id` AS `assigned_user_id`, CONCAT(u.firstname, " ", u.lastname) AS assignedto
+FROM `oc_request_callback` `rc`
+LEFT JOIN `lead_assign` `la` ON `la`.`lead_id` = `rc`.`request_callback_id`
+WHERE `rc`.`name` NOT LIKE \'%test%\' ESCAPE \'!\'
+AND `rc`.`date_added` > \'2026-08-16\'
+ORDER BY `rc`.`date_added` DESC')
+ 3 SYSTEMPATH\Database\BaseBuilder.php(1659): CodeIgniter\Database\BaseConnection->query('SELECT `rc`.`request_callback_id`, `rc`.`name`, `rc`.`email`, `rc`.`mobile`, `rc`.`state`, `rc`.`stage`, `rc`.`status`, `rc`.`date_added`, `rc`.`tracking_data`, `la`.`user_id` AS `assigned_user_id`, CONCAT(u.firstname, " ", u.lastname) AS assignedto
+FROM `oc_request_callback` `rc`
+LEFT JOIN `lead_assign` `la` ON `la`.`lead_id` = `rc`.`request_callback_id`
+WHERE `rc`.`name` NOT LIKE :rc.name: ESCAPE \'!\'
+AND `rc`.`date_added` > :rc.date_added:
+ORDER BY `rc`.`date_added` DESC', [...], false)
+ 4 APPPATH\Models\LeadsModel.php(187): CodeIgniter\Database\BaseBuilder->get()
+ 5 APPPATH\Controllers\Leads.php(116): App\Models\LeadsModel->getLeads(15, 0, 0, [...])
+ 6 SYSTEMPATH\CodeIgniter.php(974): App\Controllers\Leads->index()
+ 7 SYSTEMPATH\CodeIgniter.php(520): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Leads))
+ 8 SYSTEMPATH\CodeIgniter.php(363): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 9 SYSTEMPATH\Boot.php(417): CodeIgniter\CodeIgniter->run()
+10 SYSTEMPATH\Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+11 FCPATH\index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2026-09-15 08:23:15 --> [Caused by] mysqli_sql_exception: Unknown column 'u.firstname' in 'field list'
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 300.
+ 1 SYSTEMPATH\Database\MySQLi\Connection.php(300): mysqli->query('SELECT `rc`.`request_callback_id`, `rc`.`name`, `rc`.`email`, `rc`.`mobile`, `rc`.`state`, `rc`.`stage`, `rc`.`status`, `rc`.`date_added`, `rc`.`tracking_data`, `la`.`user_id` AS `assigned_user_id`, CONCAT(u.firstname, " ", u.lastname) AS assignedto
+FROM `oc_request_callback` `rc`
+LEFT JOIN `lead_assign` `la` ON `la`.`lead_id` = `rc`.`request_callback_id`
+WHERE `rc`.`name` NOT LIKE \'%test%\' ESCAPE \'!\'
+AND `rc`.`date_added` > \'2026-08-16\'
+ORDER BY `rc`.`date_added` DESC', 0)
+ 2 SYSTEMPATH\Database\BaseConnection.php(908): CodeIgniter\Database\MySQLi\Connection->execute('SELECT `rc`.`request_callback_id`, `rc`.`name`, `rc`.`email`, `rc`.`mobile`, `rc`.`state`, `rc`.`stage`, `rc`.`status`, `rc`.`date_added`, `rc`.`tracking_data`, `la`.`user_id` AS `assigned_user_id`, CONCAT(u.firstname, " ", u.lastname) AS assignedto
+FROM `oc_request_callback` `rc`
+LEFT JOIN `lead_assign` `la` ON `la`.`lead_id` = `rc`.`request_callback_id`
+WHERE `rc`.`name` NOT LIKE \'%test%\' ESCAPE \'!\'
+AND `rc`.`date_added` > \'2026-08-16\'
+ORDER BY `rc`.`date_added` DESC')
+ 3 SYSTEMPATH\Database\BaseConnection.php(825): CodeIgniter\Database\BaseConnection->simpleQuery('SELECT `rc`.`request_callback_id`, `rc`.`name`, `rc`.`email`, `rc`.`mobile`, `rc`.`state`, `rc`.`stage`, `rc`.`status`, `rc`.`date_added`, `rc`.`tracking_data`, `la`.`user_id` AS `assigned_user_id`, CONCAT(u.firstname, " ", u.lastname) AS assignedto
+FROM `oc_request_callback` `rc`
+LEFT JOIN `lead_assign` `la` ON `la`.`lead_id` = `rc`.`request_callback_id`
+WHERE `rc`.`name` NOT LIKE \'%test%\' ESCAPE \'!\'
+AND `rc`.`date_added` > \'2026-08-16\'
+ORDER BY `rc`.`date_added` DESC')
+ 4 SYSTEMPATH\Database\BaseBuilder.php(1659): CodeIgniter\Database\BaseConnection->query('SELECT `rc`.`request_callback_id`, `rc`.`name`, `rc`.`email`, `rc`.`mobile`, `rc`.`state`, `rc`.`stage`, `rc`.`status`, `rc`.`date_added`, `rc`.`tracking_data`, `la`.`user_id` AS `assigned_user_id`, CONCAT(u.firstname, " ", u.lastname) AS assignedto
+FROM `oc_request_callback` `rc`
+LEFT JOIN `lead_assign` `la` ON `la`.`lead_id` = `rc`.`request_callback_id`
+WHERE `rc`.`name` NOT LIKE :rc.name: ESCAPE \'!\'
+AND `rc`.`date_added` > :rc.date_added:
+ORDER BY `rc`.`date_added` DESC', [...], false)
+ 5 APPPATH\Models\LeadsModel.php(187): CodeIgniter\Database\BaseBuilder->get()
+ 6 APPPATH\Controllers\Leads.php(116): App\Models\LeadsModel->getLeads(15, 0, 0, [...])
+ 7 SYSTEMPATH\CodeIgniter.php(974): App\Controllers\Leads->index()
+ 8 SYSTEMPATH\CodeIgniter.php(520): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Leads))
+ 9 SYSTEMPATH\CodeIgniter.php(363): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+10 SYSTEMPATH\Boot.php(417): CodeIgniter\CodeIgniter->run()
+11 SYSTEMPATH\Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+12 FCPATH\index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+DEBUG - 2026-09-15 08:23:25 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:23:27 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:24:42 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:24:45 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:24:47 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:24:49 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:24:57 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:24:59 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:25:05 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:25:08 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:25:38 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:25:40 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:25:45 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:25:47 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:26:28 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:26:30 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:26:58 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:26:59 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:27:06 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:27:08 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:27:18 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:27:19 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:27:27 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:27:28 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:49:51 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:49:52 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:51:14 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:51:16 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:51:22 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:51:24 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:51:26 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:51:28 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:51:45 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:51:48 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:52:36 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:52:39 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:52:44 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:52:47 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:52:51 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:52:53 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:56:16 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:56:18 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:56:22 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:56:23 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:56:26 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:56:27 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:56:32 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:56:34 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:56:37 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:56:38 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:59:06 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:59:08 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:59:10 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:59:12 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:59:16 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 08:59:17 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 09:00:00 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+CRITICAL - 2026-09-15 09:00:00 --> CodeIgniter\View\Exceptions\ViewException: Invalid file: "lead-details.php"
+[Method: GET, Route: leads/view/109557]
+in SYSTEMPATH\Exceptions\FrameworkException.php on line 39.
+ 1 SYSTEMPATH\View\View.php(228): CodeIgniter\Exceptions\FrameworkException::forInvalidFile('lead-details.php')
+ 2 SYSTEMPATH\Common.php(1268): CodeIgniter\View\View->render('lead-details', [], true)
+ 3 APPPATH\Controllers\Leads.php(163): view('lead-details', [...])
+ 4 SYSTEMPATH\CodeIgniter.php(974): App\Controllers\Leads->view('109557')
+ 5 SYSTEMPATH\CodeIgniter.php(520): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Leads))
+ 6 SYSTEMPATH\CodeIgniter.php(363): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 7 SYSTEMPATH\Boot.php(417): CodeIgniter\CodeIgniter->run()
+ 8 SYSTEMPATH\Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 9 FCPATH\index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+DEBUG - 2026-09-15 09:01:20 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 09:01:21 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 09:01:22 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 09:02:58 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 09:03:05 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 09:03:07 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 09:03:20 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 09:03:22 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 09:03:23 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 09:03:59 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 09:04:03 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 09:04:05 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 09:04:15 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 09:04:17 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 09:04:17 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 09:04:57 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 09:04:59 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 09:08:16 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 09:08:17 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 09:11:59 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 09:12:01 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 09:12:17 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 09:12:19 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 09:12:28 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 09:12:30 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 09:14:02 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 09:14:03 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 09:19:28 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 09:19:30 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 09:19:54 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 09:20:54 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 09:23:02 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 09:29:40 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 09:29:57 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 09:29:59 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 09:30:18 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 09:30:20 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 09:31:56 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 09:31:58 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 09:32:17 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 09:32:19 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 11:01:01 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 11:01:03 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+DEBUG - 2026-09-15 11:27:12 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
