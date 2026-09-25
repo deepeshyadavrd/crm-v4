@@ -6,58 +6,65 @@ use App\Models\UserModel;
 
 class Auth extends BaseController
 {
-    public function __construct()
-    {
-        // Load URL and Form helpers globally for redirects and input scrubbing
+    protected UserModel $userModel;
+
+    public function __construct() {
         helper(['url', 'form']);
+        $this->userModel = new UserModel();
     }
 
-    public function login()
-    {
-        // 1. If already logged in, redirect to dashboard using modern session check
+    public function login() {
         if (session()->get('is_logged_in')) {
-            return redirect()->to('dashboard');
+            return redirect()->to(base_url('/'));
         }
 
         $data['title'] = 'CRM Login';
-        
-        // 2. Return the view directly
+
         return view('login_form', $data);
     }
 
-    public function process_login()
-    {
-        // 3. Collect post data using the Request object
-        $username = $this->request->getPost('username');
-        $password = $this->request->getPost('password');
+    public function process_login() {
 
-        $userModel = new UserModel();
-        $user = $userModel->verify_opencart_admin_user($username, $password);
+        $username = trim((string) $this->request->getPost('username'));
+        $password = (string) $this->request->getPost('password');
 
-        if ($user) {
-            // 4. Set session data using the global session helper array function
-            $sessionData = [
-                'user_id'       => $user['user_id'],
-                'username'      => $user['username'],
-                'user_group_id' => $user['user_group_id'],
-                'is_logged_in'  => true
-            ];
-            session()->set($sessionData);
-            
-            return redirect()->to('dashboard');
-        } else {
-            // 5. Flashdata syntax update for temporary error notices
-            session()->setFlashdata('error', 'Invalid username or password or inactive user.');
-            
-            return redirect()->to('auth/login');
+        if($username === '' || $password === ''){
+            session()->setFlashdata(
+                'error',
+                'Username and password required'
+            );
+            return redirect()->to(base_url('auth/login'));
         }
+        $user = $this->userModel->verify_opencart_admin_user($username, $password);
+
+        if (!$user) {
+            
+            session()->setFlashData(
+                'error',
+                'Invalid username or password or inactive user.'
+            );
+            
+            return redirect()->to(base_url('auth/login'));
+        }
+        
+        session()->regenerate(true);
+
+        session()->set([
+            'user_id'       => $user['user_id'],
+            'username'      => $user['username'],
+            'user_group_id' => $user['user_group_id'],
+            'firstname'     => $user['firstname'],
+            'lastname'      => $user['lastname'],
+            'email'         => $user['email'],
+            'is_logged_in'  => true,
+        ]);
+            
+            return redirect()->to(base_url('/'));
     }
 
-    public function logout()
-    {
-        // 6. Destroy session completely and clear browser authentication cookie footprints
+    public function logout() {
         session()->destroy();
         
-        return redirect()->to('auth/login');
+        return redirect()->to(base_url('auth/login'));
     }
 }

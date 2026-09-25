@@ -4,8 +4,7 @@ namespace App\Models;
 
 use CodeIgniter\Model;
 
-class UserModel extends Model
-{
+class UserModel extends Model {
     protected $table = 'oc_user';
     protected $primaryKey = 'user_id';
     protected $returnType = 'array';
@@ -13,8 +12,7 @@ class UserModel extends Model
     /**
      * Verify OpenCart admin user credentials.
      */
-    public function verify_opencart_admin_user(string $username, string $password)
-    {
+    public function verify_opencart_admin_user(string $username, string $password) {
         $user = $this->select([
             'user_id',
             'username',
@@ -36,17 +34,6 @@ class UserModel extends Model
             return false;
         }
 
-        /*
-         * OpenCart password:
-         *
-         * SHA1(
-         *     salt .
-         *     SHA1(
-         *         salt .
-         *         SHA1(password)
-         *     )
-         * )
-         */
         $hashedPassword = sha1(
             $user['salt'] .
             sha1(
@@ -58,6 +45,8 @@ class UserModel extends Model
         if (!hash_equals($user['password'], $hashedPassword)) {
             return false;
         }
+        
+        unset($user['password'], $user['salt']);
 
         return $user;
     }

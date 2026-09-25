@@ -18,20 +18,20 @@ class WSController extends BaseController
     }
 
     /* Replaces check_isvaliduser() security block */
-    public function checkIsValidUser()
-    {
-        // session() is a global helper function available anywhere in CI4
-        if (!session()->get('is_logged_in')) {
-            // In CI4, you MUST explicitly use 'return' with redirects
-            header('Location: ' . base_url('auth/login'));
-            exit(); 
-        }
-    }
+    // public function checkIsValidUser()
+    // {
+    //     // session() is a global helper function available anywhere in CI4
+    //     if (!session()->get('is_logged_in')) {
+    //         // In CI4, you MUST explicitly use 'return' with redirects
+    //         header('Location: ' . base_url('auth/login'));
+    //         exit(); 
+    //     }
+    // }
 
     /* Renders your header view fragment */
     public function website_header($seo_data = '')
     {
-        $this->checkIsValidUser();
+        // $this->checkIsValidUser();
 
         $data['user_type'] = session()->get('user_group_id');
         

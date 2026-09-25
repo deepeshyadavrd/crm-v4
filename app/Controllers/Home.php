@@ -16,9 +16,9 @@ class Home extends WSController
     public function index()
     {
         // Authentication check (uncommented and updated to modern CI4 syntax)
-        if (!session()->get('is_logged_in')) {
-            return redirect()->to('auth/login');
-        }
+        // if (!session()->get('is_logged_in')) {
+        //     return redirect()->to('auth/login');
+        // }
 
         // 2. Instantiate the modern CI4 Model
         $orderModel = new OrderModel();
