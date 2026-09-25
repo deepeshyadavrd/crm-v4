@@ -1,1 +1,15 @@
 .env
+
+# Ignore CodeIgniter 4 writable and temp directories
+writable/cache/*
+writable/debugbar/*
+writable/logs/*
+writable/session/*
+writable/uploads/*
+
+# If you want to keep the directory structure but ignore contents:
+!writable/cache/index.html
+!writable/debugbar/index.html
+!writable/logs/index.html
+!writable/session/index.html
+!writable/uploads/index.html
