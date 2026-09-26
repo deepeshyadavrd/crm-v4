@@ -19,7 +19,7 @@ class LeadsModel extends Model
     /**
      * Get single lead
      */
-    public function getlead($lead_id)
+    public function getlead($lead_id, $user_id = 0)
     {
         $builder = $this->db->table('oc_request_callback');
 
@@ -30,7 +30,18 @@ class LeadsModel extends Model
             'oc_request_callback.request_callback_id = oc_custom_furniture_request_images.cfr_id',
             'left'
         );
-
+        if ($user_id != 0) {
+            $builder->join(
+                'lead_assign lead_access',
+                'lead_access.lead_id = oc_request_callback.request_callback_id',
+                'inner'
+            );
+        
+            $builder->where(
+                'lead_access.user_id',
+                $user_id
+            );
+        }
         $builder->where(
             'oc_request_callback.request_callback_id',
             $lead_id

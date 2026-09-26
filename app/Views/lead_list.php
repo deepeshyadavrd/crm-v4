@@ -599,7 +599,7 @@
 
                                             <a
                                                 class="btn"
-                                                href="<?= site_url('leads/view/' . $lead->request_callback_id) ?>"
+                                                href="<?= base_url('leads/view/' . $lead->request_callback_id) ?>"
                                             >
                                                 View
                                             </a>

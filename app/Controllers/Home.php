@@ -53,4 +53,17 @@ class Home extends WSController
 
         return $html;
     }
+    public function testAuthorization()
+{
+    $authorization = new \App\Services\Authorization();
+
+    return $this->response->setJSON([
+        'logged_in'   => session()->get('is_logged_in'),
+        'user_id'     => session()->get('user_id'),
+        'group_id'    => $authorization->getUserGroupId(),
+        'lead_scope'  => $authorization->getLeadScope(),
+        'can_view'    => $authorization->can('leads', 'view'),
+        'can_assign'  => $authorization->can('leads', 'assign'),
+    ]);
+}
 }

@@ -35,3 +35,5 @@ $routes->get('leads/searchProduct', 'Leads::searchProduct');
 
 /* Notification */
 $routes->get('notifications/unread_notifications', 'Notifications::unread_notifications');
+
+$routes->get('test-authorization', 'Home::testAuthorization');
