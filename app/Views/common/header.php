@@ -109,7 +109,7 @@ line-height: 36px;
 <div class="overlay"></div>
 
 <!-- Top Bar -->
-<nav class="navbar navbar-expand-lg navbar-light">
+<nav class="navbar navbar-expand-lg navbar-light position-relative">
     <div class="container-fluid d-flex align-items-center">        
         <div class="navbar-brand">
             <a href="javascript:void(0);" class="h-bars"></a>
@@ -182,7 +182,7 @@ line-height: 36px;
     </div>
 </nav>
 
-<div class="menu-container">
+<div class="menu-container position-relative">
     <div class="menu">
         <ul>
             <?php if($user_type ==1){ ?>

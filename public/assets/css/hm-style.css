@@ -1,5 +1,5 @@
 .index2 section.content {
-  margin: 102px 0px 0px 0px !important;
+  margin: 0px !important;
 }
 /* ––––––––––––––––––––––––––––––––––––––––––––––––––
 Screen style's
@@ -8,8 +8,8 @@ Screen style's
   width:100%;
   margin: 0 auto;
   background:#263238;
-  position:fixed;
-  top:60px;
+  position:absolute;
+  /* top:60px; */
   z-index:10;
 }
 .menu-mobile {
@@ -172,7 +172,7 @@ Mobile style's
   }
 
   .index2 section.content {
-    margin: 102px 0px 0px 0px !important;
+    margin: 0px !important;
   }
 
   .menu-container {

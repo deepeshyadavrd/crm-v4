@@ -33,6 +33,12 @@ $routes->get('leads/mark_seen/(:num)', 'Leads::mark_seen/$1');
 $routes->post('leads/search', 'Leads::search');
 $routes->get('leads/searchProduct', 'Leads::searchProduct');
 
+/* Orders */
+$routes->get('orders', 'Orders::index');
+$routes->get('orders/view/(:num)', 'Orders::view/$1');
+$routes->post('orders/status/(:num)', 'Orders::status/$1');
+
+
 /* Notification */
 $routes->get('notifications/unread_notifications', 'Notifications::unread_notifications');
 

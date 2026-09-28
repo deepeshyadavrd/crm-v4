@@ -115,6 +115,8 @@ class Filters extends BaseFilters
                 'leads',
                 'leads/*',
                 'notifications/*',
+                'orders',
+                'orders/*',
             ],
         ],
     ];
