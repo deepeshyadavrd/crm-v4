@@ -771,4 +771,95 @@ class OrderModel extends Model {
 
         return $this->db->transStatus();
     }
+    public function getCrmOrder(int $orderId): ?array
+{
+    $builder = $this->db->table('oc_crm_order crm');
+
+    $builder->select([
+        'crm.crm_order_id',
+        'crm.order_id',
+        'crm.created_by',
+        'crm.date_added',
+        'crm.order_source',
+        'crm.dispatch_deadline',
+        'crm.delivery_date',
+        'CONCAT(u.firstname, " ", u.lastname) AS sales_person'
+    ]);
+
+    $builder->join(
+        'oc_user u',
+        'u.user_id = crm.created_by',
+        'left'
+    );
+
+    $builder->where('crm.order_id', $orderId);
+
+    $result = $builder->get()->getRowArray();
+
+    return $result ?: null;
+}
+public function getCrmOrderProducts(int $orderId): array
+{
+    $builder = $this->db->table('oc_order_product op');
+
+    $builder->select([
+        'op.order_product_id',
+        'op.order_id',
+        'op.product_id',
+        'op.name',
+        'op.model',
+        'op.quantity',
+        'op.price',
+        'op.total',
+        'crm.vendor',
+        'crm.vendor_price'
+    ]);
+
+    $builder->join(
+        'oc_crm_order_product crm',
+        'crm.order_product_id = op.order_product_id',
+        'left'
+    );
+
+    $builder->where('op.order_id', $orderId);
+
+    return $builder->get()->getResultArray();
+}
+public function getOrderPayments(int $orderId): array
+{
+    $builder = $this->db->table('oc_crm_order_payment p');
+
+    $builder->select([
+        'p.payment_id',
+        'p.amount',
+        'p.payment_method',
+        'p.payment_reference',
+        'p.payment_date',
+        'p.comment',
+        'p.created_by',
+        'CONCAT(u.firstname, " ", u.lastname) AS created_by_name'
+    ]);
+
+    $builder->join(
+        'oc_user u',
+        'u.user_id = p.created_by',
+        'left'
+    );
+
+    $builder->where('p.order_id', $orderId);
+    $builder->orderBy('p.payment_date', 'ASC');
+
+    return $builder->get()->getResultArray();
+}
+public function getOrderPaidAmount(int $orderId): float
+{
+    $builder = $this->db->table('oc_crm_order_payment');
+
+    $builder->selectSum('amount');
+    $builder->where('order_id', $orderId);
+
+    $result = $builder->get()->getRowArray();
+
+    return (float) ($result['amount'] ?? 0);
+}
 }

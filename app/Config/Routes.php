@@ -38,6 +38,8 @@ $routes->get('orders', 'Orders::index');
 $routes->get('orders/view/(:num)', 'Orders::view/$1');
 $routes->post('orders/status/(:num)', 'Orders::status/$1');
 
+/* product */
+$routes->get('products/search', 'Product::search');
 
 /* Notification */
 $routes->get('notifications/unread_notifications', 'Notifications::unread_notifications');

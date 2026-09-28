@@ -116,7 +116,7 @@ $('#product_search').on('keyup', function() {
         }
 
         $.ajax({
-            url: "<?= base_url('leads/searchProduct') ?>",
+            url: "<?= base_url('products/search') ?>",
             method: "GET",
             data: { term: query },
             success: function(data) {
