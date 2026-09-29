@@ -64,13 +64,8 @@ class Orders extends WSController
         }
     }
 
-
-    /*
-     * ORDER LIST
-     */
-
-    public function index()
-    {
+    /* ORDER LIST */
+    public function index() {
         $search = trim(
             (string) $this->request->getGet('search')
         );
@@ -81,9 +76,7 @@ class Orders extends WSController
         );
 
         $perPage = 20;
-
         $offset = ($page - 1) * $perPage;
-
 
         $orders = $this->orderModel->getAllOrders(
             $perPage,
@@ -93,13 +86,11 @@ class Orders extends WSController
             $this->userId
         );
 
-
-        $total = $this->orderModel->countAllOrders(
-            $search !== '' ? $search : null,
-            $this->scope,
-            $this->userId
-        );
-
+        $total = $this->orderModel->getTotalOrders([
+            'search' => $search,
+            'scope' => $this->scope,
+            'user_id' => $this->userId
+        ]);
 
         $pager = service('pager');
 
@@ -108,7 +99,6 @@ class Orders extends WSController
             $perPage,
             $total
         );
-
 
         $data = [
             'title' => 'Orders',
@@ -129,27 +119,20 @@ class Orders extends WSController
         ];
 
 
-        /*
- * CI4 view loading
- */
-$html = $this->website_header();
+        /* CI4 view loading */
+        $html = $this->website_header();
 
-$html .= view('orders/index', $data);
+        $html .= view('orders/index', $data);
 
-$html .= $this->website_footer();
+        $html .= $this->website_footer();
 
-return $html;
+        return $html;
     }
 
 
-    /*
-     * ORDER DETAIL
-     */
-
-    public function view(int $orderId = 0)
-    {
+    /* ORDER DETAIL */
+    public function view(int $orderId = 0) {
         if ($orderId <= 0) {
-
             return redirect()
                 ->to(site_url('orders'))
                 ->with(
@@ -158,11 +141,7 @@ return $html;
                 );
         }
 
-
-        /*
-         * Check access before loading order.
-         */
-
+        /* Check access before loading order. */
         if (!$this->orderModel->canAccessOrder(
             $orderId,
             $this->scope,
@@ -177,14 +156,11 @@ return $html;
                 );
         }
 
-
         $order = $this->orderModel->getOrder(
             $orderId
         );
 
-
         if (!$order) {
-
             return redirect()
                 ->to(site_url('orders'))
                 ->with(
@@ -193,16 +169,12 @@ return $html;
                 );
         }
 
-
         $data = [
             'title' => 'Order #' . $orderId,
 
             'order' => $order,
 
-            /*
-             * getOrder() already loads these,
-             * so don't query them again.
-             */
+            /* getOrder() already loads these, so don't query them again. */
 
             'products' => $order['products'] ?? [],
             'totals' => $order['totals'] ?? [],
@@ -223,27 +195,20 @@ return $html;
         ];
 
 
-        /*
- * CI4 view loading
- */
-$html = $this->website_header();
+        /* CI4 view loading */
+        $html = $this->website_header();
 
-$html .= view('orders/view', $data);
+        $html .= view('orders/view', $data);
 
-$html .= $this->website_footer();
+        $html .= $this->website_footer();
 
-return $html;
+        return $html;
     }
 
 
-    /*
-     * UPDATE ORDER STATUS
-     */
-
-    public function status(int $orderId = 0)
-    {
+    /* UPDATE ORDER STATUS */
+    public function status(int $orderId = 0) {
         if (!$this->canEdit) {
-
             return redirect()
                 ->back()
                 ->with(
@@ -252,9 +217,7 @@ return $html;
                 );
         }
 
-
         if ($orderId <= 0) {
-
             return redirect()
                 ->to(site_url('orders'))
                 ->with(
@@ -263,11 +226,7 @@ return $html;
                 );
         }
 
-
-        /*
-         * Verify access.
-         */
-
+        /* Verify access. */
         if (!$this->orderModel->canAccessOrder(
             $orderId,
             $this->scope,
@@ -282,14 +241,12 @@ return $html;
                 );
         }
 
-
         $statusId = (int) $this->request
             ->getPost('order_status_id');
 
         $comment = trim(
             (string) $this->request->getPost('comment')
         );
-
 
         if ($statusId <= 0) {
 
@@ -301,11 +258,7 @@ return $html;
                 );
         }
 
-
-        /*
-         * Verify status exists.
-         */
-
+        /* Verify status exists. */
         $validStatus = false;
 
         foreach (
@@ -322,9 +275,7 @@ return $html;
             }
         }
 
-
         if (!$validStatus) {
-
             return redirect()
                 ->back()
                 ->with(
@@ -333,18 +284,14 @@ return $html;
                 );
         }
 
-
         try {
-
             $updated = $this->orderModel->updateOrderStatus(
                 $orderId,
                 $statusId,
                 $comment
             );
 
-
             if (!$updated) {
-
                 return redirect()
                     ->back()
                     ->with(
@@ -352,7 +299,6 @@ return $html;
                         'Unable to update order status.'
                     );
             }
-
 
             return redirect()
                 ->to(
@@ -373,7 +319,6 @@ return $html;
                 $e->getMessage()
             );
 
-
             return redirect()
                 ->back()
                 ->with(
@@ -382,4 +327,475 @@ return $html;
                 );
         }
     }
+
+    public function create() {
+        if (!$this->canCreate) {
+            return redirect()
+                ->to(base_url('orders'))
+                ->with('error', 'You do not have permission to create orders.');
+        }
+
+        /* GET */
+        if ($this->request->getMethod() !== 'post') {
+            $data = [
+                'title' => 'Create Order',
+                'orderStatuses' => $this->orderModel
+                    ->getOrderStatuses(),
+                'countries' => $this->orderModel
+                    ->getCountries(),
+                'zones' => $this->orderModel->getZonesByCountry(99),
+
+                'formData' => [
+                    'firstname' => '',
+                    'lastname' => '',
+                    'email' => '',
+                    'telephone' => '',
+
+                    'payment_firstname' => '',
+                    'payment_lastname' => '',
+                    'payment_company' => '',
+                    'payment_address_1' => '',
+                    'payment_address_2' => '',
+                    'payment_city' => '',
+                    'payment_postcode' => '',
+                    'payment_country' => '',
+                    'payment_country_id' => '',
+                    'payment_zone' => '',
+                    'payment_zone_id' => '',
+
+                    'shipping_same_as_payment' => 1,
+
+                    'shipping_firstname' => '',
+                    'shipping_lastname' => '',
+                    'shipping_company' => '',
+                    'shipping_address_1' => '',
+                    'shipping_address_2' => '',
+                    'shipping_city' => '',
+                    'shipping_postcode' => '',
+                    'shipping_country_id' => '',
+                    'shipping_zone_id' => '',
+                    'shipping_method' => '',
+                    'shipping_code' => '',
+
+                    'payment_method' => '',
+                    'payment_code' => '',
+
+                    'order_source' => '',
+                    'dispatch_deadline' => '',
+                    'delivery_date' => '',
+
+                    'order_status_id' => '',
+                    'advance' => '',
+                    'payment_reference' => '',
+                    'payment_date' => '',
+                    'payment_comment' => '',
+
+                    'comment' => ''
+                ]
+            ];
+
+            $html = $this->website_header();
+            $html .= view(
+                'orders/create_order',
+                $data
+            );
+
+            $html .= $this->website_footer();
+
+            return $html;
+        }
+
+        /* POST */
+        $post = $this->request->getPost();
+
+        /* Basic validation */
+        $validation = service('validation');
+        $rules = [
+            'firstname' => [
+                'label' => 'First Name',
+                'rules' => 'required|max_length[100]'
+            ],
+
+            'email' => [
+                'label' => 'Email',
+                'rules' => 'permit_empty|valid_email|max_length[150]'
+            ],
+
+            'telephone' => [
+                'label' => 'Contact',
+                'rules' => 'required|max_length[50]'
+            ],
+
+            'payment_firstname' => [
+                'label' => 'Billing First Name',
+                'rules' => 'required|max_length[100]'
+            ],
+
+            'payment_address_1' => [
+                'label' => 'Billing Address',
+                'rules' => 'required|max_length[255]'
+            ],
+
+            'payment_city' => [
+                'label' => 'Billing City',
+                'rules' => 'required|max_length[100]'
+            ],
+
+            'payment_postcode' => [
+                'label' => 'Billing Postcode',
+                'rules' => 'required|max_length[20]'
+            ],
+
+            'payment_country_id' => [
+                'label' => 'Billing Country',
+                'rules' => 'required|is_natural_no_zero'
+            ],
+
+            'payment_zone_id' => [
+                'label' => 'Billing State',
+                'rules' => 'required|is_natural_no_zero'
+            ],
+
+            'order_status_id' => [
+                'label' => 'Final Status',
+                'rules' => 'required|is_natural_no_zero'
+            ],
+
+            'products' => [
+                'label' => 'Products',
+                'rules' => 'required'
+            ]
+        ];
+
+        if (!$validation->setRules($rules)->run($post)) {
+            $data = [
+                'title' => 'Create Order',
+
+                'orderStatuses' => $this->OrderModel
+                    ->getOrderStatuses(),
+
+                'countries' => $this->OrderModel
+                    ->getCountries(),
+
+                'zones' => [],
+
+                'formData' => $post,
+
+                'validation' => $validation
+            ];
+
+            $html = $this->website_header();
+            $html .= view(
+                'orders/create_order',
+                $data
+            );
+            $html .= $this->website_footer();
+
+            return $html;
+        }
+
+        /* Products */
+        $products = [];
+
+        if (isset($post['products']) && is_array($post['products']) ) {
+            foreach ($post['products'] as $product) {
+
+                $productId = (int) (
+                    $product['product_id'] ?? 0
+                );
+
+                $quantity = (int) (
+                    $product['quantity'] ?? 0
+                );
+
+                $price = (float) (
+                    $product['price'] ?? 0
+                );
+
+                if ($productId <= 0) {
+                    continue;
+                }
+
+                if ($quantity <= 0) {
+                    throw new Exception(
+                        'Invalid product quantity.'
+                    );
+                }
+
+                if ($price < 0) {
+                    throw new Exception(
+                        'Invalid product selling price.'
+                    );
+                }
+
+                $products[] = [
+                    'product_id' => $productId,
+
+                    'name' => trim(
+                        (string) ($product['name'] ?? '')
+                    ),
+
+                    'model' => trim(
+                        (string) ($product['model'] ?? '')
+                    ),
+
+                    'quantity' => $quantity,
+
+                    /* Customer negotiated selling price. */
+                    'price' => $price,
+
+                    /* Vendor / manufacturer. */
+                    'vendor' => trim(
+                        (string) ($product['vendor'] ?? '')
+                    ),
+
+                    /* Vendor's per-unit manufacturing cost. */
+                    'vendor_price' => (float) (
+                        $product['vendor_price'] ?? 0
+                    ),
+
+                    'tax_per_unit' => (float) (
+                        $product['tax_per_unit'] ?? 0
+                    )
+                ];
+            }
+        }
+
+        if (empty($products)) {
+
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with(
+                    'error',
+                    'Please add at least one product.'
+                );
+        }
+
+        /* Advance */
+        $advance = 0;
+
+        if (
+            isset($post['advance']) &&
+            $post['advance'] !== '' &&
+            is_numeric($post['advance'])
+        ) {
+            $advance = (float) $post['advance'];
+        }
+
+        if ($advance < 0) {
+
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with(
+                    'error',
+                    'Advance amount cannot be negative.'
+                );
+        }
+
+        /* Prepare order data */
+        $orderData = [
+            /* Customer */
+            'firstname' => trim(
+                (string) ($post['firstname'] ?? '')
+            ),
+
+            'lastname' => trim(
+                (string) ($post['lastname'] ?? '')
+            ),
+
+            'email' => trim(
+                (string) ($post['email'] ?? '')
+            ),
+
+            'telephone' => trim(
+                (string) ($post['telephone'] ?? '')
+            ),
+
+            'fax' => trim(
+                (string) ($post['fax'] ?? '')
+            ),
+
+            /* Billing */
+            'payment_firstname' => trim(
+                (string) ($post['payment_firstname'] ?? '')
+            ),
+
+            'payment_lastname' => trim(
+                (string) ($post['payment_lastname'] ?? '')
+            ),
+
+            'payment_company' => trim(
+                (string) ($post['payment_company'] ?? '')
+            ),
+
+            'payment_address_1' => trim(
+                (string) ($post['payment_address_1'] ?? '')
+            ),
+
+            'payment_address_2' => trim(
+                (string) ($post['payment_address_2'] ?? '')
+            ),
+
+            'payment_city' => trim(
+                (string) ($post['payment_city'] ?? '')
+            ),
+
+            'payment_postcode' => trim(
+                (string) ($post['payment_postcode'] ?? '')
+            ),
+
+            'payment_country' => trim(
+                (string) ($post['payment_country'] ?? '')
+            ),
+
+            'payment_country_id' => (int) (
+                $post['payment_country_id'] ?? 0
+            ),
+
+            'payment_zone' => trim(
+                (string) ($post['payment_zone'] ?? '')
+            ),
+
+            'payment_zone_id' => (int) (
+                $post['payment_zone_id'] ?? 0
+            ),
+
+            'payment_method' => trim(
+                (string) ($post['payment_method'] ?? '')
+            ),
+
+            'payment_code' => trim(
+                (string) ($post['payment_code'] ?? '')
+            ),
+
+            /* Shipping */
+            'shipping_same_as_payment' => !empty(
+                $post['shipping_same_as_payment']
+            ),
+
+            'shipping_firstname' => trim(
+                (string) ($post['shipping_firstname'] ?? '')
+            ),
+
+            'shipping_lastname' => trim(
+                (string) ($post['shipping_lastname'] ?? '')
+            ),
+
+            'shipping_company' => trim(
+                (string) ($post['shipping_company'] ?? '')
+            ),
+
+            'shipping_address_1' => trim(
+                (string) ($post['shipping_address_1'] ?? '')
+            ),
+
+            'shipping_address_2' => trim(
+                (string) ($post['shipping_address_2'] ?? '')
+            ),
+
+            'shipping_city' => trim(
+                (string) ($post['shipping_city'] ?? '')
+            ),
+
+            'shipping_postcode' => trim(
+                (string) ($post['shipping_postcode'] ?? '')
+            ),
+
+            'shipping_country_id' => (int) (
+                $post['shipping_country_id'] ?? 0
+            ),
+
+            'shipping_zone_id' => (int) (
+                $post['shipping_zone_id'] ?? 0
+            ),
+
+            'shipping_method' => trim(
+                (string) ($post['shipping_method'] ?? '')
+            ),
+
+            'shipping_code' => trim(
+                (string) ($post['shipping_code'] ?? '')
+            ),
+
+            /* CRM */
+            'order_source' => trim(
+                (string) ($post['order_source'] ?? '')
+            ),
+
+            'dispatch_deadline' => !empty(
+                $post['dispatch_deadline']
+            )
+                ? $post['dispatch_deadline']
+                : null,
+
+            'delivery_date' => !empty(
+                $post['delivery_date']
+            )
+                ? $post['delivery_date']
+                : null,
+
+            /* This goes directly to oc_order.order_status_id. */
+            'order_status_id' => (int) (
+                $post['order_status_id'] ?? 0
+            ),
+
+            /* Payment */
+            'advance' => $advance,
+
+            'payment_reference' => trim(
+                (string) ($post['payment_reference'] ?? '')
+            ),
+
+            'payment_date' => !empty(
+                $post['payment_date']
+            )
+                ? $post['payment_date']
+                : null,
+
+            'payment_comment' => trim(
+                (string) ($post['payment_comment'] ?? '')
+            ),
+
+            /* Internal comment */
+            'comment' => trim(
+                (string) ($post['comment'] ?? '')
+            ),
+
+            /* Products */
+            'products' => $products
+        ];
+
+        /* Create order */
+        try {
+
+            $orderId = $this->OrderModel->createOrder($orderData, $this->userId);
+
+            return redirect()
+                ->to(base_url(
+                    'orders/view/' . $orderId
+                ))
+                ->with(
+                    'success',
+                    'Order created successfully.'
+                );
+
+        } catch (Exception $e) {
+
+            log_message(
+                'error',
+                'CRM create order controller error: ' .
+                $e->getMessage()
+            );
+
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with(
+                    'error',
+                    $e->getMessage()
+                );
+        }
+    }   
 }
