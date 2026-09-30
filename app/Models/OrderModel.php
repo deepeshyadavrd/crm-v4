@@ -319,6 +319,9 @@ class OrderModel extends Model {
                 'crm.order_id',
                 'crm.created_by',
                 'crm.date_added',
+                'crm.order_source',
+                'crm.dispatch_deadline',
+                'crm.delivery_date',
                 'u.username',
                 'u.firstname',
                 'u.lastname'
@@ -335,7 +338,6 @@ class OrderModel extends Model {
         return $owner ?: null;
     }
 
-
     private function createCrmOrderOwnership( int $orderId, int $userId ): bool {
         return $this->db
             ->table('oc_crm_order')
@@ -346,19 +348,17 @@ class OrderModel extends Model {
             ]);
     }
 
-
     /* ORDER DETAIL*/
-
     public function getOrder(int $orderId): ?array {
         $builder = $this->db->table('oc_order o');
 
         $builder->select([
             'o.*',
-            'CONCAT(c.firstname, " ", c.lastname) AS customer',
-            'c.firstname AS customer_firstname',
-            'c.lastname AS customer_lastname',
-            'c.email AS customer_email',
-            'c.telephone AS customer_telephone',
+            'CONCAT( COALESCE(NULLIF(o.firstname, ""), c.firstname), " ", COALESCE(NULLIF(o.lastname, ""), c.lastname) ) AS customer',
+            'COALESCE( NULLIF(o.firstname, ""), c.firstname ) AS customer_firstname',
+            'COALESCE( NULLIF(o.lastname, ""), c.lastname ) AS customer_lastname',
+            'COALESCE( NULLIF(o.email, ""), c.email ) AS customer_email',
+            'COALESCE( NULLIF(o.telephone, ""), c.telephone ) AS customer_telephone',
             'os.name AS order_status'
         ]);
 
@@ -382,10 +382,18 @@ class OrderModel extends Model {
             return null;
         }
 
-        $order['products'] = $this->getOrderProducts($orderId);
-        $order['totals'] = $this->getOrderTotals($orderId);
-        $order['ownership'] = $this->getCrmOrderOwner($orderId);
+        // $order['products'] = $this->getOrderProducts($orderId);
+        // $order['totals'] = $this->getOrderTotals($orderId);
+        // $order['ownership'] = $this->getCrmOrderOwner($orderId);
 
+        // return $order;
+        $order['products'] = $this->getOrderProducts($orderId);
+        // print_r($order);
+        $order['crm_products'] = $this->getCrmOrderProducts($orderId);
+        $order['totals'] = $this->getOrderTotals($orderId);
+        $order['ownership'] = $this->getCrmOrderOwner($orderId); 
+        $order['payments'] = $this->getOrderPayments($orderId);
+    
         return $order;
     }
 
@@ -845,14 +853,14 @@ public function createOrder(array $orderData, int $createdBy): int
         }
 
         /* CRM ownership */
-        if (!$this->createCrmOrderOwnership(
-            $orderId,
-            $createdBy
-        )) {
-            throw new Exception(
-                'Failed to save CRM order ownership.'
-            );
-        }
+        // if (!$this->createCrmOrderOwnership(
+        //     $orderId,
+        //     $createdBy
+        // )) {
+        //     throw new Exception(
+        //         'Failed to save CRM order ownership.'
+        //     );
+        // }
 
         /*
          * Initial payment / advance.
@@ -1026,7 +1034,6 @@ public function createOrder(array $orderData, int $createdBy): int
 
 
     /* UPDATE ORDER STATUS */
-
     public function updateOrderStatus(
         int $orderId,
         int $statusId,
@@ -1058,95 +1065,182 @@ public function createOrder(array $orderData, int $createdBy): int
 
         return $this->db->transStatus();
     }
-    public function getCrmOrder(int $orderId): ?array
-{
-    $builder = $this->db->table('oc_crm_order crm');
+    // get order from crm table
+    public function getCrmOrder(int $orderId): ?array {
+        $builder = $this->db->table('oc_crm_order crm');
 
-    $builder->select([
-        'crm.crm_order_id',
-        'crm.order_id',
-        'crm.created_by',
-        'crm.date_added',
-        'crm.order_source',
-        'crm.dispatch_deadline',
-        'crm.delivery_date',
-        'CONCAT(u.firstname, " ", u.lastname) AS sales_person'
-    ]);
+        $builder->select([
+            'crm.crm_order_id',
+            'crm.order_id',
+            'crm.created_by',
+            'crm.date_added',
+            'crm.order_source',
+            'crm.dispatch_deadline',
+            'crm.delivery_date',
+            'CONCAT(u.firstname, " ", u.lastname) AS sales_person'
+        ]);
 
-    $builder->join(
-        'oc_user u',
-        'u.user_id = crm.created_by',
-        'left'
-    );
+        $builder->join(
+            'oc_user u',
+            'u.user_id = crm.created_by',
+            'left'
+        );
 
-    $builder->where('crm.order_id', $orderId);
+        $builder->where('crm.order_id', $orderId);
 
-    $result = $builder->get()->getRowArray();
+        $result = $builder->get()->getRowArray();
 
-    return $result ?: null;
-}
-public function getCrmOrderProducts(int $orderId): array
-{
-    $builder = $this->db->table('oc_order_product op');
+        return $result ?: null;
+    }
+    // get order poducts from crm table
+    public function getCrmOrderProducts(int $orderId): array {
+        $builder = $this->db->table('oc_order_product op');
 
-    $builder->select([
-        'op.order_product_id',
-        'op.order_id',
-        'op.product_id',
-        'op.name',
-        'op.model',
-        'op.quantity',
-        'op.price',
-        'op.total',
-        'crm.vendor',
-        'crm.vendor_price'
-    ]);
+        $builder->select([
+            'op.order_product_id',
+            'op.order_id',
+            'op.product_id',
+            'op.name',
+            'op.model',
+            'op.quantity',
+            'op.price',
+            'op.total',
+            'crm.vendor',
+            'crm.vendor_price'
+        ]);
 
-    $builder->join(
-        'oc_crm_order_product crm',
-        'crm.order_product_id = op.order_product_id',
-        'left'
-    );
+        $builder->join(
+            'oc_crm_order_product crm',
+            'crm.order_product_id = op.order_product_id',
+            'left'
+        );
 
-    $builder->where('op.order_id', $orderId);
+        $builder->where('op.order_id', $orderId);
 
-    return $builder->get()->getResultArray();
-}
-public function getOrderPayments(int $orderId): array
-{
-    $builder = $this->db->table('oc_crm_order_payment p');
+        $products = $builder
+            ->orderBy('op.order_product_id', 'ASC')
+            ->get()
+            ->getResultArray();
 
-    $builder->select([
-        'p.payment_id',
-        'p.amount',
-        'p.payment_method',
-        'p.payment_reference',
-        'p.payment_date',
-        'p.comment',
-        'p.created_by',
-        'CONCAT(u.firstname, " ", u.lastname) AS created_by_name'
-    ]);
+        foreach ($products as &$product) {
 
-    $builder->join(
-        'oc_user u',
-        'u.user_id = p.created_by',
-        'left'
-    );
+            $product['files'] =
+                $this->getCrmOrderProductFiles(
+                    $orderId,
+                    (int) $product['order_product_id']
+                );
+        }
 
-    $builder->where('p.order_id', $orderId);
-    $builder->orderBy('p.payment_date', 'ASC');
+        return $products;
+    }
+    // get order payment details from crm table
+    public function getOrderPayments(int $orderId): array {
+        $builder = $this->db->table('oc_crm_order_payment p');
 
-    return $builder->get()->getResultArray(); 
-}
-public function getOrderPaidAmount(int $orderId): float
-{
-    $builder = $this->db->table('oc_crm_order_payment');
+        $builder->select([
+            'p.payment_id',
+            'p.amount',
+            'p.payment_method',
+            'p.payment_reference',
+            'p.payment_date',
+            'p.comment',
+            'p.created_by',
+            'CONCAT(u.firstname, " ", u.lastname) AS created_by_name'
+        ]);
 
-    $builder->selectSum('amount');
-    $builder->where('order_id', $orderId);
+        $builder->join(
+            'oc_user u',
+            'u.user_id = p.created_by',
+            'left'
+        );
 
-    $result = $builder->get()->getRowArray();
+        $builder->where('p.order_id', $orderId);
+        $builder->orderBy('p.payment_date', 'ASC');
 
-    return (float) ($result['amount'] ?? 0);
-}
+        return $builder->get()->getResultArray(); 
+    }
+    public function getOrderPaidAmount(int $orderId): float {
+        $builder = $this->db->table('oc_crm_order_payment');
+
+        $builder->selectSum('amount');
+        $builder->where('order_id', $orderId);
+
+        $result = $builder->get()->getRowArray();
+
+        return (float) ($result['amount'] ?? 0);
+    }
+    public function getCrmOrderProductFiles( int $orderId, int $orderProductId ): array {
+        return $this->db
+            ->table('oc_crm_order_product_file f')
+            ->select([
+                'f.crm_order_product_file_id',
+                'f.order_id',
+                'f.order_product_id',
+                'f.file_name',
+                'f.file_path',
+                'f.file_type',
+                'f.file_size',
+                'f.uploaded_by',
+                'f.date_added',
+                'u.username',
+                'u.firstname',
+                'u.lastname'
+            ])
+            ->join(
+                'oc_user u',
+                'u.user_id = f.uploaded_by',
+                'left'
+            )
+            ->where('f.order_id', $orderId)
+            ->where(
+                'f.order_product_id',
+                $orderProductId
+            )
+            ->orderBy(
+                'f.crm_order_product_file_id',
+                'DESC'
+            )
+            ->get()
+            ->getResultArray();
+    }
+    public function updateCrmOrderProduct( int $orderId, int $orderProductId, string $vendor, float $vendorPrice ): bool {
+    
+        $builder = $this->db
+            ->table('oc_crm_order_product');
+    
+        $existing = $builder
+            ->where(
+                'order_id',
+                $orderId
+            )
+            ->where(
+                'order_product_id',
+                $orderProductId
+            )
+            ->get()
+            ->getRowArray();
+    
+        if (!$existing) {
+    
+            return false;
+        }
+    
+        return $this->db
+            ->table('oc_crm_order_product')
+            ->where(
+                'order_id',
+                $orderId
+            )
+            ->where(
+                'order_product_id',
+                $orderProductId
+            )
+            ->update([
+                'vendor' =>
+                    $vendor,
+    
+                'vendor_price' =>
+                    $vendorPrice
+            ]);
+    }
 }

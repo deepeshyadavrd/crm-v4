@@ -168,7 +168,29 @@ class Orders extends WSController
                     'Order not found.'
                 );
         }
+        $payments = $order['payments'] ?? [];
 
+        $paymentReceived = 0;
+
+        foreach ($payments as $payment) {
+            $paymentReceived +=
+            (float) $payment['amount'];
+        }
+
+        $orderTotal = (float) $order['total'];
+
+        $paymentDue = $orderTotal - $paymentReceived;
+
+        if ($paymentDue < 0) {
+            $paymentDue = 0;
+        }
+        /* Create CRM product lookup. */
+        $crmProducts = [];
+
+        foreach ($order['crm_products'] ?? [] as $crmProduct) {
+
+            $crmProducts[(int) $crmProduct['order_product_id']] = $crmProduct;
+        }
         $data = [
             'title' => 'Order #' . $orderId,
 
@@ -177,12 +199,13 @@ class Orders extends WSController
             /* getOrder() already loads these, so don't query them again. */
 
             'products' => $order['products'] ?? [],
+            'crmProducts' => $order['crm_products'] ?? [],
             'totals' => $order['totals'] ?? [],
             'ownership' => $order['ownership'] ?? null,
-
-            'statuses' =>
-                $this->orderModel->getOrderStatuses(),
-
+            'payments' => $payments,
+            'paymentReceived' => $paymentReceived,
+            'paymentDue' => $paymentDue,
+            'statuses' => $this->orderModel->getOrderStatuses(),
             'history' =>
                 $this->orderModel->getOrderHistory(
                     $orderId
@@ -193,8 +216,7 @@ class Orders extends WSController
             'canEdit' => $this->canEdit,
             'canDelete' => $this->canDelete
         ];
-
-
+// print_r($data);
         /* CI4 view loading */
         $html = $this->website_header();
 
@@ -204,7 +226,6 @@ class Orders extends WSController
 
         return $html;
     }
-
 
     /* UPDATE ORDER STATUS */
     public function status(int $orderId = 0) {
@@ -227,12 +248,7 @@ class Orders extends WSController
         }
 
         /* Verify access. */
-        if (!$this->orderModel->canAccessOrder(
-            $orderId,
-            $this->scope,
-            $this->userId
-        )) {
-
+        if (!$this->orderModel->canAccessOrder( $orderId, $this->scope, $this->userId )) {
             return redirect()
                 ->to(site_url('orders'))
                 ->with(
@@ -249,7 +265,6 @@ class Orders extends WSController
         );
 
         if ($statusId <= 0) {
-
             return redirect()
                 ->back()
                 ->with(
@@ -260,16 +275,12 @@ class Orders extends WSController
 
         /* Verify status exists. */
         $validStatus = false;
-
         foreach (
             $this->orderModel->getOrderStatuses()
             as $status
         ) {
 
-            if (
-                (int) $status['order_status_id'] ===
-                $statusId
-            ) {
+            if ((int) $status['order_status_id'] === $statusId ) {
                 $validStatus = true;
                 break;
             }
@@ -329,6 +340,12 @@ class Orders extends WSController
     }
 
     public function create() {
+        log_message(
+            'error',
+            'CREATE ORDER: method = ' .
+            $this->request->getMethod()
+        );
+    
         if (!$this->canCreate) {
             return redirect()
                 ->to(base_url('orders'))
@@ -336,7 +353,11 @@ class Orders extends WSController
         }
 
         /* GET */
-        if ($this->request->getMethod() !== 'post') {
+        if ($this->request->getMethod() !== 'POST') {
+            log_message(
+                'error',
+                'CREATE ORDER: rendering form'
+            );
             $data = [
                 'title' => 'Create Order',
                 'orderStatuses' => $this->orderModel
@@ -404,7 +425,10 @@ class Orders extends WSController
 
             return $html;
         }
-
+        log_message(
+            'error',
+            'CREATE ORDER: POST processing started'
+        );
         /* POST */
         $post = $this->request->getPost();
 
@@ -468,13 +492,23 @@ class Orders extends WSController
         ];
 
         if (!$validation->setRules($rules)->run($post)) {
+            log_message(
+                'error',
+                'CREATE ORDER: validation failed'
+            );
+        
+            log_message(
+                'error',
+                'CREATE ORDER: validation errors = ' .
+                json_encode($validation->getErrors())
+            );
             $data = [
                 'title' => 'Create Order',
 
-                'orderStatuses' => $this->OrderModel
+                'orderStatuses' => $this->orderModel
                     ->getOrderStatuses(),
 
-                'countries' => $this->OrderModel
+                'countries' => $this->orderModel
                     ->getCountries(),
 
                 'zones' => [],
@@ -770,7 +804,7 @@ class Orders extends WSController
         /* Create order */
         try {
 
-            $orderId = $this->OrderModel->createOrder($orderData, $this->userId);
+            $orderId = $this->orderModel->createOrder($orderData, $this->userId);
 
             return redirect()
                 ->to(base_url(
@@ -797,5 +831,93 @@ class Orders extends WSController
                     $e->getMessage()
                 );
         }
-    }   
+    }
+
+    public function productUpdate( int $orderId = 0, int $orderProductId = 0 ) {
+    
+        if ( $orderId <= 0 || $orderProductId <= 0 ) {
+
+            return redirect()
+                ->to(site_url('orders'))
+                ->with(
+                    'error',
+                    'Invalid product.'
+                );
+        }
+    
+        /* User must have edit permission. */
+        if (!$this->canEdit) {
+    
+            return $this->response
+            ->setStatusCode(403)
+            ->setJSON([
+                'success' => false,
+                'message' =>
+                    'You do not have permission to edit this order.'
+            ]);
+        }
+    
+        /* Check order access. */
+        if (!$this->orderModel->canAccessOrder( $orderId, $this->scope, $this->userId )) {
+    
+            return $this->response
+            ->setStatusCode(403)
+            ->setJSON([
+                'success' => false,
+                'message' =>
+                    'You do not have access to this order.'
+            ]);
+        }
+    
+        $vendor = trim( (string) $this->request->getPost('vendor'));
+    
+        $vendorPrice = (float) $this->request->getPost('vendor_price');
+    
+        if ($vendorPrice < 0) {
+    
+            return $this->response
+            ->setStatusCode(422)
+            ->setJSON([
+                'success' => false,
+                'message' =>
+                    'Vendor price cannot be negative.'
+            ]);
+        }
+    
+        $updated =
+            $this->orderModel->updateCrmOrderProduct(
+                $orderId,
+                $orderProductId,
+                $vendor,
+                $vendorPrice
+            );
+    
+    
+        if (!$updated) {
+            return $this->response
+            ->setStatusCode(500)
+            ->setJSON([
+                'success' => false,
+                'message' =>
+                    'Product information could not be updated.'
+            ]);
+        }
+    
+    
+        return $this->response
+        ->setJSON([
+            'success' => true,
+            'message' =>
+                'Product information updated successfully.',
+            'vendor' =>
+                $vendor,
+            'vendor_price' =>
+                number_format(
+                    $vendorPrice,
+                    2,
+                    '.',
+                    ''
+                )
+        ]);
+    }
 }
