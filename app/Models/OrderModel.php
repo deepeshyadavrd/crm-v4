@@ -1243,4 +1243,40 @@ public function createOrder(array $orderData, int $createdBy): int
                     $vendorPrice
             ]);
     }
+    public function updateCrmOrderDetails( int $orderId, string $orderSource, ?string $dispatchDeadline, ?string $deliveryDate ): bool {
+    
+        return $this->db
+            ->table('oc_crm_order')
+            ->where('order_id', $orderId)
+            ->update([
+                'order_source' =>
+                    $orderSource,
+    
+                'dispatch_deadline' =>
+                    $dispatchDeadline,
+    
+                'delivery_date' =>
+                    $deliveryDate
+            ]);
+    }
+    public function updateCustomerDetails( int $orderId, string $firstname, string $lastname, string $email, string $telephone ): bool {
+        return $this->db
+            ->table('oc_order')
+            ->where('order_id', $orderId)
+            ->update([
+                'firstname' => $firstname,
+                'lastname' => $lastname,
+                'email' => $email,
+                'telephone' => $telephone
+            ]);
+    }
+    public function updateStatusDetails(int $orderId, int $orderstatusId, string $comment): bool {
+        return $this->db
+            ->table('oc_order')
+            ->where('order_id', $orderId)
+            ->update([
+                'order_status_id' => $orderstatusId,
+                'comment' => $comment
+            ]);
+    }
 }

@@ -920,4 +920,208 @@ class Orders extends WSController
                 )
         ]);
     }
+    public function update(int $orderId = 0) {
+        if ($orderId <= 0) {
+
+            return $this->response
+                ->setStatusCode(400)
+                ->setJSON([
+                    'success' => false,
+                    'message' => 'Invalid order.'
+                ]);
+        }
+
+        /* User must have edit permission. */
+        if (!$this->canEdit) {
+
+            return $this->response
+                ->setStatusCode(403)
+                ->setJSON([
+                    'success' => false,
+                    'message' =>
+                        'You do not have permission to edit this order.'
+                ]);
+        }
+
+        /* Check order access before doing anything. */
+        if (!$this->orderModel->canAccessOrder( $orderId, $this->scope, $this->userId )) {
+
+            return $this->response
+                ->setStatusCode(403)
+                ->setJSON([
+                    'success' => false,
+                    'message' =>
+                        'You do not have access to this order.'
+                ]);
+        }
+
+        /* Identify which order section is being updated. */
+        $section = trim( (string) $this->request->getPost( 'section' ) );
+
+        if ($section === '') {
+
+            return $this->response
+                ->setStatusCode(400)
+                ->setJSON([
+                    'success' => false,
+                    'message' =>
+                        'Invalid update section.'
+                ]);
+        }
+
+        /* Dispatch the update to the relevant section. */
+        switch ($section) {
+
+            case 'crm':
+                return $this->updateCrmSection($orderId);
+
+            case 'customer':
+                return $this->updateCustomerSection($orderId);
+
+            case 'status':
+
+                return $this->updateStatusSection($orderId);
+
+            case 'payment-address':
+
+                return $this->updatePaymentAddressSection($orderId);
+
+            case 'shipping-address':
+
+                return $this->updateShippingAddressSection($orderId);
+
+            default:
+
+                return $this->response
+                    ->setStatusCode(400)
+                    ->setJSON([
+                        'success' => false,
+                        'message' =>
+                            'Invalid update section.'
+                    ]);
+        }
+    }
+    private function updateCrmSection(int $orderId) {
+        $orderSource = trim( (string) $this->request->getPost( 'order_source' ) );
+        $dispatchDeadline = $this->request->getPost( 'dispatch_deadline' );
+        $deliveryDate = $this->request->getPost( 'delivery_date' );
+    
+        $updated = $this->orderModel->updateCrmOrderDetails( $orderId, $orderSource, $dispatchDeadline, $deliveryDate );
+    
+        if (!$updated) {
+    
+            return $this->response
+                ->setStatusCode(500)
+                ->setJSON([
+                    'success' => false,
+                    'message' =>
+                        'CRM details could not be updated.'
+                ]);
+        }
+    
+        return $this->response
+            ->setJSON([
+                'success' => true,
+                'section' => 'crm',
+    
+                'order_source' =>
+                    $orderSource,
+    
+                'dispatch_deadline' =>
+                    $dispatchDeadline,
+    
+                'delivery_date' =>
+                    $deliveryDate
+            ]);
+    }
+    private function updateCustomerSection( int $orderId ) {
+    
+        $firstname = trim((string) $this->request->getPost('firstname'));
+        $lastname = trim((string) $this->request->getPost('lastname'));
+        $email = trim((string) $this->request->getPost('email'));
+        $telephone = trim( (string) $this->request->getPost('telephone'));
+    
+        if ($firstname === '') {
+            return $this->response
+                ->setStatusCode(400)
+                ->setJSON([
+                    'success' => false,
+                    'message' =>
+                        'First name is required.'
+                ]);
+        }
+    
+        if ( $email !== '' && !filter_var( $email, FILTER_VALIDATE_EMAIL ) ) {
+            return $this->response
+                ->setStatusCode(400)
+                ->setJSON([
+                    'success' => false,
+                    'message' =>
+                        'Please enter a valid email address.'
+                ]);
+        }
+    
+        $updated =
+            $this->orderModel
+                ->updateCustomerDetails( $orderId, $firstname, $lastname, $email, $telephone );
+    
+        if (!$updated) {
+    
+            return $this->response
+                ->setStatusCode(500)
+                ->setJSON([
+                    'success' => false,
+                    'message' =>
+                        'Customer details could not be updated.'
+                ]);
+        }
+    
+        return $this->response
+            ->setJSON([
+                'success' => true,
+                'section' => 'customer',
+                'firstname' => $firstname,
+                'lastname' => $lastname,
+                'email' => $email,
+                'telephone' => $telephone
+            ]);
+    }
+    private function updateStatusSection( int $orderId ) {
+    
+        $orderstatusid = trim((string) $this->request->getPost('order_status_id'));
+        $comment = trim((string) $this->request->getPost('comment'));
+    
+        if ($orderstatusid === '') {
+            return $this->response
+                ->setStatusCode(400)
+                ->setJSON([
+                    'success' => false,
+                    'message' =>
+                        'Order status id is required.'
+                ]);
+        }
+    
+    
+        $updated = $this->orderModel->updateStatusDetails($orderId, $orderstatusid, $comment);
+    
+        if (!$updated) {
+    
+            return $this->response
+                ->setStatusCode(500)
+                ->setJSON([
+                    'success' => false,
+                    'message' =>
+                        'order status could not be updated.'
+                ]);
+        }
+    
+        return $this->response
+            ->setJSON([
+                'success' => true,
+                'section' => 'status',
+                'order_status_id' => $orderstatusid,
+                'comment' => $comment
+            ]);
+    }
+
 }
