@@ -979,15 +979,15 @@ class Orders extends WSController
                 return $this->updateCustomerSection($orderId);
 
             case 'status':
-
                 return $this->updateStatusSection($orderId);
+            
+            case 'payment':
+                return $this->insertPayment($orderId);
 
             case 'payment-address':
-
                 return $this->updatePaymentAddressSection($orderId);
 
             case 'shipping-address':
-
                 return $this->updateShippingAddressSection($orderId);
 
             default:
@@ -996,8 +996,7 @@ class Orders extends WSController
                     ->setStatusCode(400)
                     ->setJSON([
                         'success' => false,
-                        'message' =>
-                            'Invalid update section.'
+                        'message' => 'Invalid update section.'
                     ]);
         }
     }
@@ -1014,8 +1013,7 @@ class Orders extends WSController
                 ->setStatusCode(500)
                 ->setJSON([
                     'success' => false,
-                    'message' =>
-                        'CRM details could not be updated.'
+                    'message' => 'CRM details could not be updated.'
                 ]);
         }
     
@@ -1023,15 +1021,9 @@ class Orders extends WSController
             ->setJSON([
                 'success' => true,
                 'section' => 'crm',
-    
-                'order_source' =>
-                    $orderSource,
-    
-                'dispatch_deadline' =>
-                    $dispatchDeadline,
-    
-                'delivery_date' =>
-                    $deliveryDate
+                'order_source' => $orderSource,
+                'dispatch_deadline' => $dispatchDeadline,
+                'delivery_date' => $deliveryDate
             ]);
     }
     private function updateCustomerSection( int $orderId ) {
@@ -1046,8 +1038,7 @@ class Orders extends WSController
                 ->setStatusCode(400)
                 ->setJSON([
                     'success' => false,
-                    'message' =>
-                        'First name is required.'
+                    'message' => 'First name is required.'
                 ]);
         }
     
@@ -1056,14 +1047,12 @@ class Orders extends WSController
                 ->setStatusCode(400)
                 ->setJSON([
                     'success' => false,
-                    'message' =>
-                        'Please enter a valid email address.'
+                    'message' => 'Please enter a valid email address.'
                 ]);
         }
     
         $updated =
-            $this->orderModel
-                ->updateCustomerDetails( $orderId, $firstname, $lastname, $email, $telephone );
+            $this->orderModel->updateCustomerDetails( $orderId, $firstname, $lastname, $email, $telephone );
     
         if (!$updated) {
     
@@ -1071,8 +1060,7 @@ class Orders extends WSController
                 ->setStatusCode(500)
                 ->setJSON([
                     'success' => false,
-                    'message' =>
-                        'Customer details could not be updated.'
+                    'message' => 'Customer details could not be updated.'
                 ]);
         }
     
@@ -1096,8 +1084,7 @@ class Orders extends WSController
                 ->setStatusCode(400)
                 ->setJSON([
                     'success' => false,
-                    'message' =>
-                        'Order status id is required.'
+                    'message' => 'Order status id is required.'
                 ]);
         }
     
@@ -1110,8 +1097,7 @@ class Orders extends WSController
                 ->setStatusCode(500)
                 ->setJSON([
                     'success' => false,
-                    'message' =>
-                        'order status could not be updated.'
+                    'message' => 'order status could not be updated.'
                 ]);
         }
     
@@ -1124,4 +1110,45 @@ class Orders extends WSController
             ]);
     }
 
+    private function insertPayment( int $orderId ) {
+    
+        $amount = trim((string) $this->request->getPost('amount'));
+        $paymentmethod = trim((string) $this->request->getPost('payment_method'));
+        $paymentreference = trim((string) $this->request->getPost('payment_reference'));
+        $paymentcomment = trim((string) $this->request->getPost('payment_comment'));
+    
+        if ($amount === '') {
+            return $this->response
+                ->setStatusCode(400)
+                ->setJSON([
+                    'success' => false,
+                    'message' =>
+                        'Amount is required.'
+                ]);
+        }
+    
+    
+        $updated = $this->orderModel->insertPayment($orderId, $amount, $paymentmethod, $paymentreference, $paymentcomment);
+    
+        if (!$updated) {
+    
+            return $this->response
+                ->setStatusCode(500)
+                ->setJSON([
+                    'success' => false,
+                    'message' =>
+                        'Payment could not be updated.'
+                ]);
+        }
+    
+        return $this->response
+            ->setJSON([
+                'success' => true,
+                'section' => 'payment',
+                'amount' => $amount,
+                'paymentmethod' => $paymentmethod,
+                'paymentreference' => $paymentreference,
+                'comment' => $paymentcomment
+            ]);
+    }
 }

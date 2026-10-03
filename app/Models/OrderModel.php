@@ -1279,4 +1279,14 @@ public function createOrder(array $orderData, int $createdBy): int
                 'comment' => $comment
             ]);
     }
+    public function insertPayment(int $orderId, int $amount, string $paymentmethod, int $paymentreference, string $comment): bool {
+        return $this->db->table('oc_crm_order_payment')->insert([
+            'order_id'          => $orderId,
+            'amount'            => $amount,
+            'payment_method'    => $paymentmethod,
+            'payment_reference' => $paymentreference,
+            'comment'           => $comment,
+            'payment_date'        => date('Y-m-d H:i:s')
+        ]);
+    }
 }

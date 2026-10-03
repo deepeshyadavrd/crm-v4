@@ -1156,11 +1156,15 @@ const editSectionSave = document.getElementById( 'editSectionSave' );
                 </div>
                 <div class="mb-3">
                     <label for="addPaymentMethod" class="form-label"> Payment Method </label>
-                    <input type="text" class="form-control" name="paymnet_method" id="addPaymentMethod">
+                    <input type="text" class="form-control" name="payment_method" id="addPaymentMethod">
                 </div>
                 <div class="mb-3">
                     <label for="addPaymentReference" class="form-label"> Payment Reference </label>
                     <input type="text" class="form-control" name="payment_reference" id="addPaymentReference">
+                </div>
+                <div class="mb-3">
+                    <label for="addPaymentComment" class="form-label"> Payment Comment </label>
+                    <input type="text" class="form-control" name="payment_comment" id="addPaymentcomment">
                 </div>
             `;
         }
