@@ -420,639 +420,243 @@ document.addEventListener('DOMContentLoaded', function () {
 
     let productIndex = 0;
 
-
-    /*
-     * Add product row
-     */
+    /* Add product row */
     document.getElementById('addProduct')
         .addEventListener('click', function () {
-
             addProductRow();
-
         });
-
 
     function addProductRow() {
 
-        const container =
-            document.getElementById('productRows');
-
-        const noProducts =
-            document.getElementById('noProducts');
+        const container = document.getElementById('productRows');
+        const noProducts = document.getElementById('noProducts');
 
         noProducts.classList.add('d-none');
 
-
         const index = productIndex++;
-
-
         const row = document.createElement('div');
-
-        row.className =
-            'border rounded p-3 mb-3';
-
-
+        row.className = 'border rounded p-3 mb-3';
         row.dataset.productRow = index;
-
-
         row.innerHTML = `
-
-            <div class="d-flex
-                        justify-content-between
-                        align-items-center
-                        mb-3">
-
-                <strong>
-                    Product ${index + 1}
-                </strong>
-
-                <button type="button"
-                        class="btn btn-outline-danger btn-sm removeProduct">
-
-                    Remove
-
-                </button>
-
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <strong> Product ${index + 1} </strong>
+                <button type="button" class="btn btn-outline-danger btn-sm removeProduct"> Remove </button>
             </div>
 
-
             <!-- Product Search -->
-
             <div class="row g-3">
-
                 <div class="col-md-8">
+                    <label class="form-label"> Product </label>
+                    <input type="text" name="products[${index}][name]" class="form-control productSearch" placeholder="Search product or enter custom product name" autocomplete="off" required>
 
-                    <label class="form-label">
-                        Product
-                    </label>
+                    <div class="list-group productSearchResults mt-1"></div>
 
-                    <input type="text"
-                           class="form-control productSearch"
-                           placeholder="Search product by name or SKU"
-                           autocomplete="off">
-
-                    <div class="list-group
-                                productSearchResults
-                                mt-1">
-                    </div>
-
-                    <input type="hidden"
-                           name="products[${index}][product_id]"
-                           class="productId">
-
-                    <input type="hidden"
-                           name="products[${index}][name]"
-                           class="productName">
-
-                    <input type="hidden"
-                           name="products[${index}][model]"
-                           class="productModel">
-
+                    <input type="hidden" name="products[${index}][product_id]" class="productId" value="0">
+                    <input type="hidden" name="products[${index}][model]" class="productModel">
+                    <small class="text-muted"> Select an existing product or enter a custom product name. </small>
                 </div>
-
-
                 <div class="col-md-4">
-
-                    <label class="form-label">
-                        Quantity
-                    </label>
-
-                    <input type="number"
-                           name="products[${index}][quantity]"
-                           class="form-control productQuantity"
-                           value="1"
-                           min="1"
-                           step="1">
-
+                    <label class="form-label"> Quantity </label>
+                    <input type="number" name="products[${index}][quantity]" class="form-control productQuantity" value="1" min="1" step="1">
                 </div>
-
-
                 <div class="col-md-4">
-
-                    <label class="form-label">
-                        Selling Price
-                    </label>
-
-                    <input type="number"
-                           name="products[${index}][price]"
-                           class="form-control productPrice"
-                           value="0"
-                           min="0"
-                           step="0.01">
-
+                    <label class="form-label"> Selling Price </label>
+                    <input type="number" name="products[${index}][price]" class="form-control productPrice" value="0" min="0" step="0.01">
                 </div>
-
-
                 <div class="col-md-4">
-
-                    <label class="form-label">
-                        Product Total
-                    </label>
-
-                    <input type="text"
-                           class="form-control productTotal"
-                           value="0.00"
-                           readonly>
-
+                    <label class="form-label"> Product Total </label>
+                    <input type="text" class="form-control productTotal" value="0.00" readonly>
                 </div>
-
-
                 <div class="col-md-4">
-
-                    <label class="form-label">
-                        Vendor
-                    </label>
-
-                    <input type="text"
-                           name="products[${index}][vendor]"
-                           class="form-control"
-                           placeholder="Vendor / Manufacturer">
-
+                    <label class="form-label"> Vendor </label>
+                    <input type="text" name="products[${index}][vendor]" class="form-control" placeholder="Vendor / Manufacturer">
                 </div>
-
-
                 <div class="col-md-4">
-
-                    <label class="form-label">
-                        Vendor Price
-                    </label>
-
-                    <input type="number"
-                           name="products[${index}][vendor_price]"
-                           class="form-control"
-                           value="0"
-                           min="0"
-                           step="0.01">
-
-                    <small class="text-muted">
-                        Per unit
-                    </small>
-
+                    <label class="form-label"> Vendor Price </label>
+                    <input type="number" name="products[${index}][vendor_price]" class="form-control" value="" min="0" step="0.01">
+                    <small class="text-muted"> Per unit </small>
                 </div>
-
-
                 <div class="col-md-8">
-
-                    <label class="form-label">
-                        Approved 3D Design Files
-                    </label>
-
-                    <input type="file"
-                           name="design_files[${index}][]"
-                           class="form-control"
-                           multiple
-                           accept="image/*,.pdf">
-
-                    <small class="text-muted">
-                        You can select multiple files.
-                    </small>
-
+                    <label class="form-label"> Approved 3D Design Files </label>
+                    <input type="file" name="design_files[${index}][]" class="form-control" multiple accept="image/*,.pdf">
+                    <small class="text-muted"> You can select multiple files. </small>
                 </div>
-
             </div>
         `;
 
-
         container.appendChild(row);
-
-
         attachProductEvents(row);
-
     }
 
 
-    /*
-     * Product row events
-     */
+    /* Product row events */
     function attachProductEvents(row) {
-
-        const quantity =
-            row.querySelector('.productQuantity');
-
-        const price =
-            row.querySelector('.productPrice');
-
-        const total =
-            row.querySelector('.productTotal');
-
-
+        const quantity = row.querySelector('.productQuantity');
+        const price = row.querySelector('.productPrice');
+        const total = row.querySelector('.productTotal');
         function calculateProductTotal() {
-
-            const qty =
-                parseFloat(quantity.value) || 0;
-
-            const sellingPrice =
-                parseFloat(price.value) || 0;
-
-            const productTotal =
-                qty * sellingPrice;
-
-
-            total.value =
-                productTotal.toFixed(2);
-
+            const qty = parseFloat(quantity.value) || 0;
+            const sellingPrice = parseFloat(price.value) || 0;
+            const productTotal = qty * sellingPrice;
+            total.value = productTotal.toFixed(2);
 
             calculateGrandTotal();
-
         }
 
+        quantity.addEventListener('input', calculateProductTotal);
+        price.addEventListener('input', calculateProductTotal );
 
-        quantity.addEventListener(
-            'input',
-            calculateProductTotal
-        );
+        /* Remove product */
+        row.querySelector('.removeProduct') .addEventListener('click', function () {
+            row.remove();
+            calculateGrandTotal();
 
+            if (document.querySelectorAll('[data-product-row]').length === 0 ) {
+                document.getElementById('noProducts').classList.remove('d-none');
+            }
+        });
 
-        price.addEventListener(
-            'input',
-            calculateProductTotal
-        );
-
-
-        /*
-         * Remove product
-         */
-        row.querySelector('.removeProduct')
-            .addEventListener('click', function () {
-
-                row.remove();
-
-                calculateGrandTotal();
-
-
-                if (
-                    document.querySelectorAll(
-                        '[data-product-row]'
-                    ).length === 0
-                ) {
-
-                    document.getElementById(
-                        'noProducts'
-                    ).classList.remove('d-none');
-
-                }
-
-            });
-
-
-        /*
-         * Product search
-         */
-        const searchInput =
-            row.querySelector('.productSearch');
-
-        const results =
-            row.querySelector(
-                '.productSearchResults'
-            );
-
+        /* Product search */
+        const searchInput = row.querySelector('.productSearch');
+        const results = row.querySelector('.productSearchResults');
 
         let searchTimer = null;
 
-
-        searchInput.addEventListener(
-            'input',
+        searchInput.addEventListener( 'input',
             function () {
-
-                const term =
-                    searchInput.value.trim();
-
-
+                const term = searchInput.value.trim();
                 clearTimeout(searchTimer);
-
-
                 if (term.length < 2) {
-
                     results.innerHTML = '';
 
                     return;
-
                 }
-
 
                 searchTimer = setTimeout(
                     function () {
 
-                        fetch(
-                            '<?= base_url(
-                                'leads/searchProduct'
-                            ); ?>?term=' +
-                            encodeURIComponent(term)
-                        )
+                        fetch('<?= base_url('leads/searchProduct'); ?>?term=' + encodeURIComponent(term))
                         .then(response => response.json())
                         .then(data => {
 
                             results.innerHTML = '';
 
-
-                            data.forEach(function (
-                                product
-                            ) {
-
-                                const item =
-                                    document.createElement(
-                                        'button'
-                                    );
-
-                                item.type =
-                                    'button';
-
-                                item.className =
-                                    'list-group-item list-group-item-action';
-
-
-                                item.innerHTML =
-                                    `<strong>${escapeHtml(
-                                        product.name
-                                    )}</strong>`;
-
-
-                                item.addEventListener(
-                                    'click',
+                            data.forEach(function (product) {
+                                const item = document.createElement('button');
+                                item.type = 'button';
+                                item.className = 'list-group-item list-group-item-action';
+                                item.innerHTML = `<strong>${escapeHtml(product.name)}</strong>`;
+                                item.addEventListener('click',
                                     function () {
+                                        searchInput.value = product.name;
+                                        row.querySelector('.productId').value = product.id;
+                                        row.querySelector('.productName').value = product.name;
+                                        row.querySelector('.productModel').value = product.model || '';
 
-                                        searchInput.value =
-                                            product.name;
+                                        results.innerHTML = '';
 
-                                        row.querySelector(
-                                            '.productId'
-                                        ).value =
-                                            product.id;
-
-                                        row.querySelector(
-                                            '.productName'
-                                        ).value =
-                                            product.name;
-
-                                        row.querySelector(
-                                            '.productModel'
-                                        ).value =
-                                            product.model || '';
-
-
-                                        results.innerHTML =
-                                            '';
-
-
-                                        /*
-                                         * Use catalogue price
-                                         * as initial selling price.
-                                         *
-                                         * Salesperson can then
-                                         * change it.
-                                         */
-                                        const priceValue =
-                                        product.special_price
-        ? product.special_price
-        : product.original_price;
-
-const initialPrice =
-    parseFloat(
-        String(priceValue).replace(/,/g, '')
-    );
-
-
-                                        price.value =
-                                            isNaN(
-                                                initialPrice
-                                            )
-                                                ? 0
-                                                : initialPrice;
-
+                                        /* Use catalogue price as initial selling price. Salesperson can then change it. */
+                                        const priceValue = product.special_price ? product.special_price : product.original_price;
+                                        const initialPrice = parseFloat(String(priceValue).replace(/,/g, ''));
+                                        price.value = isNaN(initialPrice) ? 0 : initialPrice;
 
                                         calculateProductTotal();
 
                                     }
                                 );
 
-
                                 results.appendChild(item);
-
                             });
-
                         })
                         .catch(function () {
-
-                            results.innerHTML =
-                                '<div class="list-group-item text-danger">' +
-                                'Unable to search products.' +
-                                '</div>';
-
+                            results.innerHTML = '<div class="list-group-item text-danger">' + 'Unable to search products.' + '</div>';
                         });
-
                     },
                     300
                 );
-
             }
         );
-
     }
 
-
-    /*
-     * Grand total
-     */
+    /* Grand total */
     function calculateGrandTotal() {
-
         let grandTotal = 0;
-
-
-        document
-            .querySelectorAll('.productTotal')
-            .forEach(function (field) {
-
-                grandTotal +=
-                    parseFloat(field.value) || 0;
-
-            });
-
-
-        document.getElementById(
-            'grandTotalDisplay'
-        ).value =
-            grandTotal.toFixed(2);
-
-
-        document.getElementById(
-            'calculatedTotal'
-        ).value =
-            grandTotal.toFixed(2);
-
-
+        document .querySelectorAll('.productTotal') .forEach(function (field) {
+            grandTotal += parseFloat(field.value) || 0;
+        });
+        document.getElementById('grandTotalDisplay').value = grandTotal.toFixed(2);
+        document.getElementById('calculatedTotal').value = grandTotal.toFixed(2);
         calculateDue();
-
     }
 
-
-    /*
-     * Advance / Due / Payment Status
-     */
+    /* Advance / Due / Payment Status */
     function calculateDue() {
-
-        const total =
-            parseFloat(
-                document.getElementById(
-                    'calculatedTotal'
-                ).value
-            ) || 0;
-
-
-        let advance =
-            parseFloat(
-                document.getElementById(
-                    'advance'
-                ).value
-            ) || 0;
-
+        const total = parseFloat(document.getElementById('calculatedTotal').value ) || 0;
+        let advance = parseFloat( document.getElementById('advance').value) || 0;
 
         if (advance < 0) {
             advance = 0;
         }
 
-
         if (advance > total) {
             advance = total;
-
-            document.getElementById(
-                'advance'
-            ).value =
-                total.toFixed(2);
-
+            document.getElementById('advance').value = total.toFixed(2);
         }
 
-
-        const due =
-            Math.max(
-                0,
-                total - advance
-            );
-
-
-        document.getElementById(
-            'dueAmount'
-        ).value =
-            due.toFixed(2);
-
-
+        const due = Math.max(0, total - advance );
+        document.getElementById('dueAmount').value = due.toFixed(2);
         let status = 'Pending';
-
-
         if (advance >= total && total > 0) {
-
             status = 'Paid';
-
         } else if (advance > 0) {
-
             status = 'Partially Paid';
-
         }
 
-
-        document.getElementById(
-            'paymentStatus'
-        ).value = status;
-
+        document.getElementById('paymentStatus').value = status;
     }
 
 
-    document.getElementById(
-        'advance'
-    ).addEventListener(
-        'input',
-        calculateDue
-    );
+    document.getElementById('advance').addEventListener('input',calculateDue);
 
-
-    /*
-     * HTML escape
-     */
+    /* HTML escape */
     function escapeHtml(value) {
-
-        const div =
-            document.createElement('div');
-
-        div.textContent =
-            value ?? '';
+        const div = document.createElement('div');
+        div.textContent = value ?? '';
 
         return div.innerHTML;
-
     }
 
-
-    /*
-     * Add first product automatically
-     */
+    /* Add first product automatically */
     addProductRow();
 
-
-    /*
-     * Prevent accidental submit without products
-     */
-    document.getElementById(
-        'createOrderForm'
-    ).addEventListener(
-        'submit',
+    /* Prevent accidental submit without products */
+    document.getElementById('createOrderForm').addEventListener('submit',
         function (event) {
-
-            const products =
-                document.querySelectorAll(
-                    '[data-product-row]'
-                );
-
-
+            const products = document.querySelectorAll('[data-product-row]');
             if (products.length === 0) {
-
                 event.preventDefault();
-
-                alert(
-                    'Please add at least one product.'
-                );
+                alert('Please add at least one product.');
 
                 return;
-
             }
-
 
             let invalidProduct = false;
 
-
             products.forEach(function (row) {
-
-                const productId =
-                    row.querySelector(
-                        '.productId'
-                    ).value;
-
-
-                if (!productId) {
-
+                const productName = row.querySelector('.productSearch').value.trim();
+                if (!productName) {
                     invalidProduct = true;
-
                 }
-
             });
 
-
             if (invalidProduct) {
-
                 event.preventDefault();
-
-                alert(
-                    'Please select a product for every product row.'
-                );
+                alert('Please enter a product for every product row.');
 
                 return;
-
             }
-
-
-            document.getElementById(
-                'createOrderButton'
-            ).disabled = true;
-
+            document.getElementById('createOrderButton').disabled = true;
         }
     );
-
 });
 </script>
