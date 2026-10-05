@@ -166,7 +166,7 @@
                 <div class="col-md-4">
                     <div class="border rounded p-3">
                         <div class="text-muted small">Received</div>
-                        <div class="fs-5 fw-semibold text-success">
+                        <div class="fs-5 fw-semibold text-success" id="paymentReceived">
                             <?= esc($order['currency_code'] ?? '') ?>
                             <?= number_format($paymentReceived,2) ?>
                         </div>
@@ -175,14 +175,13 @@
                 <div class="col-md-4">
                     <div class="border rounded p-3">
                         <div class="text-muted small">Due</div>
-                        <div class="fs-5 fw-semibold text-danger">
+                        <div class="fs-5 fw-semibold text-danger" id="paymentDue">
                             <?= esc($order['currency_code'] ?? '') ?>
                             <?= number_format($paymentDue, 2 ) ?>
                         </div>
                     </div>
                 </div>
             </div>
-            <?php if ($payments): ?>
                 <div class="table-responsive">
                     <table class="table table-sm table-bordered mb-0">
                         <thead>
@@ -195,7 +194,8 @@
                                 <th>Added By</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="paymentList">
+                        <?php if ($payments): ?>
                             <?php foreach ($payments as $payment): ?>
                                 <tr>
                                     <td>
@@ -219,35 +219,28 @@
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
+                        <?php else: ?> 
+                            <tr id="noPaymentsRow"> 
+                                <td colspan="6" class="text-muted"> No CRM payments recorded. </td> 
+                            </tr> 
+                        <?php endif; ?>
                         </tbody>
                     </table>
                 </div>
-            <?php else: ?>
-                <div class="text-muted">
-                    No CRM payments recorded.
-                </div>
-            <?php endif; ?>
         </div>
     </div>
 
 
     <!-- Products -->
     <div class="card mb-3">
-
         <div class="card-header">
             <strong>Products</strong>
         </div>
-
         <div class="card-body p-0">
-
             <div class="table-responsive">
-
-                <table class="table table-bordered mb-0 align-middle">
-
+                <table class="table table-bordered mb-0 align-middle" id="productsTable">
                     <thead>
-
                         <tr>
-
                             <th>Product</th>
                             <th>Model</th>
                             <th>Qty</th>
@@ -256,97 +249,36 @@
                             <th>Vendor</th>
                             <th>Vendor Price</th>
                             <th>Production PDF</th>
-
                         </tr>
-
                     </thead>
 
-
                     <tbody>
-
                         <?php foreach ($products as $product): ?>
-
                             <?php
-                            $orderProductId =
-                                (int) $product['order_product_id'];
-
-                            $crmProduct =
-                                $crmProducts[$orderProductId]
-                                ?? [];
+                                $orderProductId = (int) $product['order_product_id'];
+                                $crmProduct = $crmProducts[$orderProductId] ?? [];
                             ?>
 
-                            <tr>
-
+                            <tr id="product-row-<?= $orderProductId ?>">
                                 <td>
-
                                     <strong>
-                                        <?= esc(
-                                            $product['name']
-                                        ) ?>
+                                        <?= esc( $product['name'] ) ?>
                                     </strong>
-
-
-                                    <?php if (!empty($product['options'])): ?>
-
-                                        <div class="small text-muted mt-1">
-
-                                            <?php foreach (
-                                                $product['options']
-                                                as $option
-                                            ): ?>
-
-                                                <div>
-                                                    <?= esc(
-                                                        $option['name']
-                                                    ) ?>:
-                                                    <?= esc(
-                                                        $option['value']
-                                                    ) ?>
-                                                </div>
-
-                                            <?php endforeach; ?>
-
-                                        </div>
-
-                                    <?php endif; ?>
-
                                 </td>
-
-
                                 <td>
-                                    <?= esc(
-                                        $product['model']
-                                    ) ?>
+                                    <?= esc( $product['model'] ) ?>
                                 </td>
-
-
                                 <td>
                                     <?= (int) $product['quantity'] ?>
                                 </td>
-
-
                                 <td>
-                                    <?= esc(
-                                        $order['currency_code'] ?? ''
-                                    ) ?>
-                                    <?= number_format(
-                                        (float) $product['price'],
-                                        2
-                                    ) ?>
+                                    <?= esc( $order['currency_code'] ?? '' ) ?>
+                                    <?= number_format( (float) $product['price'], 2 ) ?>
                                 </td>
-
-
                                 <td>
-                                    <?= esc(
-                                        $order['currency_code'] ?? ''
-                                    ) ?>
-                                    <?= number_format(
-                                        (float) $product['total'],
-                                        2
-                                    ) ?>
+                                    <?= esc( $order['currency_code'] ?? '' ) ?>
+                                    <?= number_format( (float) $product['total'], 2 ) ?>
                                 </td>
-
-
                                 <td>
                                     <div id="vendor-<?= $orderProductId ?>" >
                                         <?php if ($canEdit): ?>
@@ -359,7 +291,6 @@
                                 <td>
                                     <div id="vendor-price-<?= $orderProductId ?>" >
                                         <?php if ($canEdit): ?>
-                                    
                                             <input type="number" name="vendor_price" value="<?= esc( $crmProduct['vendor_price'] ?? '' ) ?>" class="form-control form-control-sm" form="product-form-<?= $orderProductId ?>" min="0" step="0.01" placeholder="Vendor price">
                                                 
                                         <?php else: ?>
@@ -367,101 +298,40 @@
                                             <?= number_format((float) ( $crmProduct['vendor_price'] ?? 0 ), 2 ) ?>
                                         <?php endif; ?>
                                     </div>
-                                            
                                     <?php if ($canEdit): ?>
                                         <form id="product-form-<?= $orderProductId ?>" class="product-update-form mt-2" data-order-id="<?= (int) $order['order_id'] ?>" data-order-product-id="<?= $orderProductId ?>" >
-                                    
                                             <?= csrf_field() ?>
-                                            <button
-                                                type="submit"
-                                                class="btn btn-sm btn-primary"
-                                            >
-                                                Save
-                                            </button>
-                                    
-                                            <span
-                                                class="small ms-2 product-update-message"
-                                            ></span>
-                                    
+                                            <button type="submit" class="btn btn-sm btn-primary" > Save </button>
+                                            <span class="small ms-2 product-update-message" ></span>
                                         </form>
-                                    
                                     <?php endif; ?>
-                                    
                                 </td>
                                 <td>
-
-                                    <?php
-                                    $files =
-                                        $crmProduct['files']
-                                        ?? [];
-                                    ?>
-
+                                    <?php $files = $crmProduct['files'] ?? []; ?>
                                     <?php if ($files): ?>
-
-                                        <?php foreach (
-                                            $files
-                                            as $file
-                                        ): ?>
-
+                                        <?php foreach ( $files as $file ): ?>
                                             <div class="mb-1">
-
-                                                <a
-                                                    href="<?= site_url(
-                                                        'orders/file/download/' .
-                                                        (int)
-                                                        $file[
-                                                            'crm_order_product_file_id'
-                                                        ]
-                                                    ) ?>"
-                                                    class="text-decoration-none"
-                                                >
-                                                    <?= esc(
-                                                        $file['file_name']
-                                                    ) ?>
+                                                <a href="<?= site_url('orders/file/download/' . (int) $file['crm_order_product_file_id']) ?>" class="text-decoration-none" >
+                                                    <?= esc( $file['file_name'] ) ?>
                                                 </a>
-
                                             </div>
-
                                         <?php endforeach; ?>
-
                                     <?php else: ?>
-
-                                        <span class="text-muted">
-                                            No file
-                                        </span>
-
+                                        <span class="text-muted"> No file </span>
                                     <?php endif; ?>
-
 
                                     <?php if ($canEdit): ?>
-
                                         <div class="mt-2">
-
-                                            <button
-                                                type="button"
-                                                class="btn btn-sm btn-outline-primary"
-                                            >
-                                                Upload PDF
-                                            </button>
-
+                                            <button type="button" class="btn btn-sm btn-outline-primary" > Upload PDF </button>
                                         </div>
-
                                     <?php endif; ?>
-
                                 </td>
-
                             </tr>
-
                         <?php endforeach; ?>
-
                     </tbody>
-
                 </table>
-
             </div>
-
         </div>
-
     </div>
 
 
@@ -1163,6 +1033,10 @@ const editSectionSave = document.getElementById( 'editSectionSave' );
                     <input type="text" class="form-control" name="payment_reference" id="addPaymentReference">
                 </div>
                 <div class="mb-3">
+                    <label for="addPaymentDate" class="form-label"> Payment Date </label>
+                    <input type="date" class="form-control" name="payment_date" id="addPaymentDate">
+                </div>
+                <div class="mb-3">
                     <label for="addPaymentComment" class="form-label"> Payment Comment </label>
                     <input type="text" class="form-control" name="payment_comment" id="addPaymentcomment">
                 </div>
@@ -1229,18 +1103,33 @@ const editSectionSave = document.getElementById( 'editSectionSave' );
                 if (firstnameElement) {
                     firstnameElement.textContent = data.firstname + ' ' +data.lastname || '-';
                 }
-
-                // if (lastnameElement) {
-                //     lastnameElement.textContent = data.lastname || '-';
-                // }
-
                 if (emailElement) {
                     emailElement.textContent = data.email || '-';
                 }
-
                 if (telephoneElement) {
                     telephoneElement.textContent = data.telephone || '-';
                 }
+            }
+            if(data.section === 'payment') {
+                $('#paymentReceived').html('<?= esc($order['currency_code'] ?? '') ?> ' + parseFloat(data.payment_received).toFixed(2));
+                $('#paymentDue').html('<?= esc($order['currency_code'] ?? '') ?> ' + parseFloat(data.payment_due).toFixed(2));
+                $('#noPaymentsRow').remove();
+                let payment = data.payment;
+                let row = `
+                    <tr>
+                        <td>${payment.payment_date}</td>
+                        <td>
+                            <?= esc($order['currency_code'] ?? '') ?>
+                            ${parseFloat(payment.amount).toFixed(2)}
+                        </td>
+                        <td>${payment.payment_method ?? '-'}</td>
+                        <td>${payment.payment_reference ?? '-'}</td>
+                        <td>${payment.comment ?? '-'}</td>
+                        <td>${payment.created_by_name ?? '-'}</td>
+                    </tr>
+                `;
+
+                $('#paymentList').prepend(row);
             }
             if (data.section === 'crm') {
                 showSuccessToast('CRM details updated successfully.' );

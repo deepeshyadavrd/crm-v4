@@ -28,19 +28,7 @@ class Orders extends WSController
         $this->userGroupId = (int) session()->get('user_group_id');
 
 
-        /*
-         * CRM permissions
-         *
-         * 1, 17, 21
-         * Full access
-         *
-         * 11
-         * View all orders
-         *
-         * 14
-         * Own orders + create
-         */
-
+        /* CRM permissions * 1, 17, 21 Full access * 11 View all orders * 14 Own orders + create */
         if (in_array($this->userGroupId, [1, 17, 21], true)) {
 
             $this->scope = 'all';
@@ -51,79 +39,44 @@ class Orders extends WSController
             $this->canDelete = true;
 
         } elseif ($this->userGroupId === 11) {
-
             $this->scope = 'all';
-
             $this->canViewAll = true;
-
         } elseif ($this->userGroupId === 14) {
-
             $this->scope = 'own';
-
             $this->canCreate = true;
         }
     }
 
     /* ORDER LIST */
     public function index() {
-        $search = trim(
-            (string) $this->request->getGet('search')
-        );
+        $search = trim((string) $this->request->getGet('search'));
 
-        $page = max(
-            1,
-            (int) $this->request->getGet('page')
-        );
+        $page = max(1,(int) $this->request->getGet('page'));
 
         $perPage = 20;
         $offset = ($page - 1) * $perPage;
 
-        $orders = $this->orderModel->getAllOrders(
-            $perPage,
-            $offset,
-            $search !== '' ? $search : null,
-            $this->scope,
-            $this->userId
-        );
-
-        $total = $this->orderModel->getTotalOrders([
-            'search' => $search,
-            'scope' => $this->scope,
-            'user_id' => $this->userId
-        ]);
+        $orders = $this->orderModel->getAllOrders($perPage,$offset,$search !== '' ? $search : null,$this->scope,$this->userId);
+        $total = $this->orderModel->getTotalOrders(['search' => $search,'scope' => $this->scope,'user_id' => $this->userId]);
 
         $pager = service('pager');
-
-        $pager->makeLinks(
-            $page,
-            $perPage,
-            $total
-        );
+        $pager->makeLinks($page,$perPage,$total);
 
         $data = [
             'title' => 'Orders',
-
             'orders' => $orders,
             'total' => $total,
-
             'search' => $search,
-
             'pager' => $pager,
-
             'canViewAll' => $this->canViewAll,
             'canCreate' => $this->canCreate,
             'canEdit' => $this->canEdit,
             'canDelete' => $this->canDelete,
-
             'scope' => $this->scope
         ];
 
-
-        /* CI4 view loading */
         $html = $this->website_header();
-
         $html .= view('orders/index', $data);
-
         $html .= $this->website_footer();
 
         return $html;
@@ -142,12 +95,7 @@ class Orders extends WSController
         }
 
         /* Check access before loading order. */
-        if (!$this->orderModel->canAccessOrder(
-            $orderId,
-            $this->scope,
-            $this->userId
-        )) {
-
+        if (!$this->orderModel->canAccessOrder($orderId,$this->scope,$this->userId)) {
             return redirect()
                 ->to(site_url('orders'))
                 ->with(
@@ -156,9 +104,7 @@ class Orders extends WSController
                 );
         }
 
-        $order = $this->orderModel->getOrder(
-            $orderId
-        );
+        $order = $this->orderModel->getOrder($orderId);
 
         if (!$order) {
             return redirect()
@@ -169,16 +115,12 @@ class Orders extends WSController
                 );
         }
         $payments = $order['payments'] ?? [];
-
         $paymentReceived = 0;
-
         foreach ($payments as $payment) {
             $paymentReceived +=
             (float) $payment['amount'];
         }
-
         $orderTotal = (float) $order['total'];
-
         $paymentDue = $orderTotal - $paymentReceived;
 
         if ($paymentDue < 0) {
@@ -188,20 +130,20 @@ class Orders extends WSController
         $crmProducts = [];
 
         foreach ($order['crm_products'] ?? [] as $crmProduct) {
-
             $crmProducts[(int) $crmProduct['order_product_id']] = $crmProduct;
         }
         $data = [
             'title' => 'Order #' . $orderId,
-
             'order' => $order,
-
             /* getOrder() already loads these, so don't query them again. */
-
             'products' => $order['products'] ?? [],
             'crmProducts' => $order['crm_products'] ?? [],
             'totals' => $order['totals'] ?? [],
-            'ownership' => $order['ownership'] ?? null,
+            'ownership' => $order['ownership'] ?? [
+                'firstname' => 'website',
+                'lastname'  => 'user',
+                'date_added' => $order['date_added']
+            ],
             'payments' => $payments,
             'paymentReceived' => $paymentReceived,
             'paymentDue' => $paymentDue,
@@ -210,20 +152,15 @@ class Orders extends WSController
                 $this->orderModel->getOrderHistory(
                     $orderId
                 ),
-
             'canViewAll' => $this->canViewAll,
             'canCreate' => $this->canCreate,
             'canEdit' => $this->canEdit,
             'canDelete' => $this->canDelete
         ];
-// print_r($data);
-        /* CI4 view loading */
+
         $html = $this->website_header();
-
         $html .= view('orders/view', $data);
-
         $html .= $this->website_footer();
-
         return $html;
     }
 
@@ -257,12 +194,9 @@ class Orders extends WSController
                 );
         }
 
-        $statusId = (int) $this->request
-            ->getPost('order_status_id');
+        $statusId = (int) $this->request->getPost('order_status_id');
 
-        $comment = trim(
-            (string) $this->request->getPost('comment')
-        );
+        $comment = trim((string) $this->request->getPost('comment'));
 
         if ($statusId <= 0) {
             return redirect()
@@ -275,11 +209,7 @@ class Orders extends WSController
 
         /* Verify status exists. */
         $validStatus = false;
-        foreach (
-            $this->orderModel->getOrderStatuses()
-            as $status
-        ) {
-
+        foreach ($this->orderModel->getOrderStatuses() as $status) {
             if ((int) $status['order_status_id'] === $statusId ) {
                 $validStatus = true;
                 break;
@@ -340,11 +270,7 @@ class Orders extends WSController
     }
 
     public function create() {
-        log_message(
-            'error',
-            'CREATE ORDER: method = ' .
-            $this->request->getMethod()
-        );
+        log_message('error','CREATE ORDER: method = ' .$this->request->getMethod());
     
         if (!$this->canCreate) {
             return redirect()
@@ -360,12 +286,9 @@ class Orders extends WSController
             );
             $data = [
                 'title' => 'Create Order',
-                'orderStatuses' => $this->orderModel
-                    ->getOrderStatuses(),
-                'countries' => $this->orderModel
-                    ->getCountries(),
+                'orderStatuses' => $this->orderModel->getOrderStatuses(),
+                'countries' => $this->orderModel->getCountries(),
                 'zones' => $this->orderModel->getZonesByCountry(99),
-
                 'formData' => [
                     'firstname' => '',
                     'lastname' => '',
@@ -416,19 +339,12 @@ class Orders extends WSController
             ];
 
             $html = $this->website_header();
-            $html .= view(
-                'orders/create_order',
-                $data
-            );
-
+            $html .= view('orders/create_order',$data);
             $html .= $this->website_footer();
 
             return $html;
         }
-        log_message(
-            'error',
-            'CREATE ORDER: POST processing started'
-        );
+        log_message('error','CREATE ORDER: POST processing started');
         /* POST */
         $post = $this->request->getPost();
 
@@ -492,36 +408,20 @@ class Orders extends WSController
         ];
 
         if (!$validation->setRules($rules)->run($post)) {
-            log_message(
-                'error',
-                'CREATE ORDER: validation failed'
-            );
+            log_message('error','CREATE ORDER: validation failed');
         
-            log_message(
-                'error',
-                'CREATE ORDER: validation errors = ' .
-                json_encode($validation->getErrors())
-            );
+            log_message('error','CREATE ORDER: validation errors = ' . json_encode($validation->getErrors()));
             $data = [
                 'title' => 'Create Order',
-
-                'orderStatuses' => $this->orderModel
-                    ->getOrderStatuses(),
-
-                'countries' => $this->orderModel
-                    ->getCountries(),
-
+                'orderStatuses' => $this->orderModel->getOrderStatuses(),
+                'countries' => $this->orderModel->getCountries(),
                 'zones' => [],
-
                 'formData' => $post,
-
                 'validation' => $validation
             ];
 
             $html = $this->website_header();
-            $html .= view(
-                'orders/create_order',
-                $data
+            $html .= view('orders/create_order',$data
             );
             $html .= $this->website_footer();
 
@@ -1113,9 +1013,11 @@ class Orders extends WSController
     private function insertPayment( int $orderId ) {
     
         $amount = trim((string) $this->request->getPost('amount'));
-        $paymentmethod = trim((string) $this->request->getPost('payment_method'));
-        $paymentreference = trim((string) $this->request->getPost('payment_reference'));
-        $paymentcomment = trim((string) $this->request->getPost('payment_comment'));
+        $paymentMethod = trim((string) $this->request->getPost('payment_method'));
+        $paymentReference = trim((string) $this->request->getPost('payment_reference'));
+        $paymentComment = trim((string) $this->request->getPost('payment_comment'));
+        $paymentDate = trim((string) $this->request->getPost('payment_date'));
+        $createdBy = session()->get('user_id');
     
         if ($amount === '') {
             return $this->response
@@ -1128,7 +1030,7 @@ class Orders extends WSController
         }
     
     
-        $updated = $this->orderModel->insertPayment($orderId, $amount, $paymentmethod, $paymentreference, $paymentcomment);
+        $updated = $this->orderModel->addPayment($orderId, $amount, $paymentMethod, $paymentReference, $paymentComment, $paymentDate, $createdBy);
     
         if (!$updated) {
     
@@ -1140,15 +1042,26 @@ class Orders extends WSController
                         'Payment could not be updated.'
                 ]);
         }
-    
+        // print_r($updated);
+        $payment = $this->orderModel->getPayment($updated);
+        $orderTotal = (float) $this->orderModel->getOrderTotal($orderId);
+        $payments = $this->orderModel->getOrderPayments($orderId);
+        $paymentReceived = 0;
+
+        foreach ($payments as $paymentRow) {
+            $paymentReceived += (float) $paymentRow['amount'];
+        }
+
+        $paymentDue = $orderTotal - $paymentReceived;
+
         return $this->response
             ->setJSON([
                 'success' => true,
                 'section' => 'payment',
-                'amount' => $amount,
-                'paymentmethod' => $paymentmethod,
-                'paymentreference' => $paymentreference,
-                'comment' => $paymentcomment
+                'payment'          => $payment,
+                'payment_received' => $paymentReceived,
+                'payment_due'      => $paymentDue,
+                'message'          => 'Payment added successfully.'
             ]);
     }
 }

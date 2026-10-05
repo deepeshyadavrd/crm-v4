@@ -19,16 +19,8 @@ class OrderModel extends Model {
         $this->db = \Config\Database::connect();
     }
 
-
     /* ORDER LIST */
-
-    public function getAllOrders(
-        int $limit,
-        int $offset,
-        ?string $search = null,
-        string $scope = 'all',
-        int $userId = 0
-    ): array {
+    public function getAllOrders(int $limit, int $offset, ?string $search = null, string $scope = 'all', int $userId = 0 ): array {
         $builder = $this->db->table('oc_order o');
 
         $builder->select([
@@ -48,23 +40,9 @@ class OrderModel extends Model {
             'u.lastname AS crm_created_by_lastname'
         ]);
 
-        $builder->join(
-            'oc_order_status os',
-            'os.order_status_id = o.order_status_id',
-            'left'
-        );
-
-        $builder->join(
-            'oc_crm_order crm',
-            'crm.order_id = o.order_id',
-            'left'
-        );
-
-        $builder->join(
-            'oc_user u',
-            'u.user_id = crm.created_by',
-            'left'
-        );
+        $builder->join('oc_order_status os', 'os.order_status_id = o.order_status_id', 'left');
+        $builder->join('oc_crm_order crm', 'crm.order_id = o.order_id', 'left');
+        $builder->join('oc_user u', 'u.user_id = crm.created_by', 'left');
 
         $this->applyOrderScope($builder, $scope, $userId);
 
@@ -79,180 +57,80 @@ class OrderModel extends Model {
 
     public function countAllOrders( ?string $search = null, string $scope = 'all', int $userId = 0 ): int {
         $builder = $this->db->table('oc_order o');
-
-        $builder->join(
-            'oc_order_status os',
-            'os.order_status_id = o.order_status_id',
-            'left'
-        );
-
-        $builder->join(
-            'oc_crm_order crm',
-            'crm.order_id = o.order_id',
-            'left'
-        );
+        $builder->join('oc_order_status os', 'os.order_status_id = o.order_status_id', 'left');
+        $builder->join('oc_crm_order crm', 'crm.order_id = o.order_id', 'left');
 
         $this->applyOrderScope($builder, $scope, $userId);
-
         $this->applySearch($builder, $search);
 
         return (int) $builder->countAllResults();
     }
-    public function getTotalOrders(array $data = []): int
-{
-    $builder = $this->db->table('oc_order o');
+    public function getTotalOrders(array $data = []): int {
+        $builder = $this->db->table('oc_order o');
+        $builder->join('oc_order_status os', 'os.order_status_id = o.order_status_id', 'left');
 
-    $builder->join(
-        'oc_order_status os',
-        'os.order_status_id = o.order_status_id',
-        'left'
-    );
+        /* CRM order ownership */
+        $builder->join('oc_crm_order crm', 'crm.order_id = o.order_id', 'left');
 
-    /*
-     * CRM order ownership
-     */
-    $builder->join(
-        'oc_crm_order crm',
-        'crm.order_id = o.order_id',
-        'left'
-    );
+        /* New CRM order-page scope */
+        $scope = $data['scope'] ?? 'all';
+        $userId = (int) ($data['user_id'] ?? 0);
 
-    /*
-     * New CRM order-page scope
-     */
-    $scope = $data['scope'] ?? 'all';
-    $userId = (int) ($data['user_id'] ?? 0);
+        $this->applyOrderScope($builder, $scope, $userId);
 
-    $this->applyOrderScope(
-        $builder,
-        $scope,
-        $userId
-    );
+        /* New CRM order-page search */
+        if (isset($data['search']) && trim((string) $data['search']) !== '' ) {
+            $this->applySearch($builder, trim((string) $data['search']));
+        }
 
-    /*
-     * New CRM order-page search
-     */
-    if (
-        isset($data['search']) &&
-        trim((string) $data['search']) !== ''
-    ) {
-        $this->applySearch(
-            $builder,
-            trim((string) $data['search'])
-        );
-    }
+        /* Old OpenCart status filter */
+        if (!empty($data['filter_order_status'])) {
+            $statuses = explode(',', $data['filter_order_status']);
 
-    /*
-     * Old OpenCart status filter
-     */
-    if (!empty($data['filter_order_status'])) {
-
-        $statuses = explode(
-            ',',
-            $data['filter_order_status']
-        );
-
-        $statusIds = [];
-
-        foreach ($statuses as $statusId) {
-
-            $statusId = (int) trim($statusId);
-
-            if ($statusId > 0) {
-                $statusIds[] = $statusId;
+            $statusIds = [];
+            foreach ($statuses as $statusId) {
+                $statusId = (int) trim($statusId);
+                if ($statusId > 0) {
+                    $statusIds[] = $statusId;
+                }
             }
+
+            if (!empty($statusIds)) {
+                $builder->whereIn('o.order_status_id', $statusIds);
+            }
+
+        } elseif (isset($data['filter_order_status_id']) && $data['filter_order_status_id'] !== '') {
+            $builder->where('o.order_status_id', (int) $data['filter_order_status_id']);
+        } else {
+            /* Old behaviour: only count orders having a status */
+            $builder->where('o.order_status_id >', 0);
         }
 
-        if (!empty($statusIds)) {
-            $builder->whereIn(
-                'o.order_status_id',
-                $statusIds
-            );
+        /* Old OpenCart filters */
+        if (!empty($data['filter_order_id'])) {
+            $builder->where('o.order_id', (int) $data['filter_order_id']);
         }
 
-    } elseif (
-        isset($data['filter_order_status_id']) &&
-        $data['filter_order_status_id'] !== ''
-    ) {
+        if (!empty($data['filter_customer'])) {
+            $builder->groupStart();
+            $builder->like("CONCAT(o.firstname, ' ', o.lastname)", $data['filter_customer'], 'both', null, true);
+            $builder->groupEnd();
+        }
 
-        $builder->where(
-            'o.order_status_id',
-            (int) $data['filter_order_status_id']
-        );
+        if (!empty($data['filter_date_added'])) {
+            $builder->where('DATE(o.date_added)', date( 'Y-m-d', strtotime($data['filter_date_added'])));
+        }
 
-    } else {
+        if (!empty($data['filter_date_modified'])) {
+            $builder->where('DATE(o.date_modified)', date('Y-m-d', strtotime($data['filter_date_modified'])));
+        }
 
-        /*
-         * Old behaviour:
-         * only count orders having a status
-         */
-        $builder->where(
-            'o.order_status_id >',
-            0
-        );
+        if (isset($data['filter_total']) && $data['filter_total'] !== '') {
+            $builder->where('o.total', (float) $data['filter_total']);
+        }
+
+        return (int) $builder->countAllResults();
     }
-
-    /*
-     * Old OpenCart filters
-     */
-    if (!empty($data['filter_order_id'])) {
-
-        $builder->where(
-            'o.order_id',
-            (int) $data['filter_order_id']
-        );
-    }
-
-    if (!empty($data['filter_customer'])) {
-
-        $builder->groupStart();
-
-        $builder->like(
-            "CONCAT(o.firstname, ' ', o.lastname)",
-            $data['filter_customer'],
-            'both',
-            null,
-            true
-        );
-
-        $builder->groupEnd();
-    }
-
-    if (!empty($data['filter_date_added'])) {
-
-        $builder->where(
-            'DATE(o.date_added)',
-            date(
-                'Y-m-d',
-                strtotime($data['filter_date_added'])
-            )
-        );
-    }
-
-    if (!empty($data['filter_date_modified'])) {
-
-        $builder->where(
-            'DATE(o.date_modified)',
-            date(
-                'Y-m-d',
-                strtotime($data['filter_date_modified'])
-            )
-        );
-    }
-
-    if (
-        isset($data['filter_total']) &&
-        $data['filter_total'] !== ''
-    ) {
-
-        $builder->where(
-            'o.total',
-            (float) $data['filter_total']
-        );
-    }
-
-    return (int) $builder->countAllResults();
-}
 
 
     private function applyOrderScope( $builder, string $scope, int $userId ): void {
@@ -282,7 +160,6 @@ class OrderModel extends Model {
 
 
     /* ORDER ACCESS */
-
     public function canAccessOrder( int $orderId, string $scope, int $userId ): bool {
         if ($scope === 'all') {
             return $this->orderExists($orderId);
@@ -300,8 +177,7 @@ class OrderModel extends Model {
     }
 
 
-    public function orderExists(int $orderId): bool
-    {
+    public function orderExists(int $orderId): bool {
         return $this->db
             ->table('oc_order')
             ->where('order_id', $orderId)
@@ -310,7 +186,6 @@ class OrderModel extends Model {
 
 
     /* CRM ORDER OWNERSHIP */
-
     public function getCrmOrderOwner(int $orderId): ?array {
         $owner = $this->db
             ->table('oc_crm_order crm')
@@ -326,11 +201,7 @@ class OrderModel extends Model {
                 'u.firstname',
                 'u.lastname'
             ])
-            ->join(
-                'oc_user u',
-                'u.user_id = crm.created_by',
-                'left'
-            )
+            ->join('oc_user u', 'u.user_id = crm.created_by', 'left')
             ->where('crm.order_id', $orderId)
             ->get()
             ->getRowArray();
@@ -362,20 +233,9 @@ class OrderModel extends Model {
             'os.name AS order_status'
         ]);
 
-        $builder->join(
-            'oc_customer c',
-            'c.customer_id = o.customer_id',
-            'left'
-        );
-
-        $builder->join(
-            'oc_order_status os',
-            'os.order_status_id = o.order_status_id',
-            'left'
-        );
-
+        $builder->join('oc_customer c', 'c.customer_id = o.customer_id', 'left');
+        $builder->join('oc_order_status os', 'os.order_status_id = o.order_status_id', 'left');
         $builder->where('o.order_id', $orderId);
-
         $order = $builder->get()->getRowArray();
 
         if (!$order) {
@@ -398,28 +258,15 @@ class OrderModel extends Model {
     }
 
     /* ORDER PRODUCTS */
-
     public function getOrderProducts(int $orderId): array {
         $builder = $this->db->table('oc_order_product op');
-
-        $builder->select([
-            'op.*',
-            'p.image'
-        ]);
-
-        $builder->join(
-            'oc_product p',
-            'p.product_id = op.product_id',
-            'left'
-        );
-
+        $builder->select(['op.*', 'p.image']);
+        $builder->join('oc_product p', 'p.product_id = op.product_id', 'left');
         $builder->where('op.order_id', $orderId);
-
         $products = $builder
             ->orderBy('op.order_product_id', 'ASC')
             ->get()
             ->getResultArray();
-
         foreach ($products as &$product) {
             $product['options'] = $this->getOrderOptions(
                 $orderId,
@@ -442,7 +289,6 @@ class OrderModel extends Model {
 
 
     /* ORDER TOTALS */
-
     public function getOrderTotals(int $orderId): array {
         return $this->db
             ->table('oc_order_total')
@@ -454,20 +300,11 @@ class OrderModel extends Model {
 
 
     /* ORDER HISTORY */
-
-    public function getOrderHistory(int $orderId): array
-    {
+    public function getOrderHistory(int $orderId): array {
         return $this->db
             ->table('oc_order_history oh')
-            ->select([
-                'oh.*',
-                'os.name AS status_name'
-            ])
-            ->join(
-                'oc_order_status os',
-                'os.order_status_id = oh.order_status_id',
-                'left'
-            )
+            ->select(['oh.*', 'os.name AS status_name'])
+            ->join('oc_order_status os', 'os.order_status_id = oh.order_status_id', 'left')
             ->where('oh.order_id', $orderId)
             ->orderBy('oh.date_added', 'DESC')
             ->get()
@@ -476,508 +313,363 @@ class OrderModel extends Model {
 
 
     /* CREATE ORDER */
-public function createOrder(array $orderData, int $createdBy): int
-{
-    if ($createdBy <= 0) {
-        throw new Exception('Invalid CRM user.');
-    }
-
-    $this->db->transStart();
-
-    try {
-
-        $now = date('Y-m-d H:i:s');
-
-        /* Currency */
-        $currency = $this->db
-            ->table('oc_currency')
-            ->where('code', 'INR')
-            ->get()
-            ->getRowArray();
-
-        if (!$currency) {
-            throw new Exception(
-                'Default currency INR was not found.'
-            );
+    public function createOrder(array $orderData, int $createdBy): int {
+        if ($createdBy <= 0) {
+            throw new Exception('Invalid CRM user.');
         }
+        $this->db->transStart();
 
-        /* Request */
-        $request = service('request');
+        try {
+            $now = date('Y-m-d H:i:s');
 
-        /* Main order */
-        $order = [
-            'invoice_no'              => 0,
-            'invoice_prefix'          => '',
-            'store_id'                => 0,
-            'store_name'              => 'URBANWOOD FURNITURE PRIVATE LIMITED',
-            'store_url'               => 'https://www.urbanwood.in/',
+            /* Currency */
+            $currency = $this->db->table('oc_currency')->where('code', 'INR')->get()->getRowArray();
 
-            'customer_id'             => 0,
-            'customer_group_id'       => 1,
-
-            'firstname'               => $orderData['firstname'],
-            'lastname'                => $orderData['lastname'],
-            'email'                   => $orderData['email'],
-            'telephone'               => $orderData['telephone'],
-            'fax'                     => $orderData['fax'] ?? '',
-
-            'custom_field'            => '[]',
-
-            'payment_firstname'       => $orderData['payment_firstname'],
-            'payment_lastname'        => $orderData['payment_lastname'],
-            'payment_company'         => $orderData['payment_company'] ?? '',
-            'payment_address_1'       => $orderData['payment_address_1'],
-            'payment_address_2'       => $orderData['payment_address_2'] ?? '',
-            'payment_city'            => $orderData['payment_city'],
-            'payment_postcode'        => $orderData['payment_postcode'],
-            'payment_country'         => $orderData['payment_country'],
-            'payment_country_id'      => $orderData['payment_country_id'],
-            'payment_zone'            => $orderData['payment_zone'],
-            'payment_zone_id'         => $orderData['payment_zone_id'],
-            'payment_method'          => $orderData['payment_method'],
-            'payment_code'            => $orderData['payment_code'],
-            'payment_address_format'  => '',
-            'payment_custom_field'    => '[]',
-
-            'shipping_firstname'      => '',
-            'shipping_lastname'       => '',
-            'shipping_company'        => '',
-            'shipping_address_1'      => '',
-            'shipping_address_2'      => '',
-            'shipping_city'           => '',
-            'shipping_postcode'       => '',
-            'shipping_country_id'     => 0,
-            'shipping_zone_id'        => 0,
-            'shipping_method'         => '',
-            'shipping_code'           => '',
-            'shipping_address_format' => '',
-            'shipping_custom_field'   => '[]',
-
-            'comment'                 => $orderData['comment'] ?? '',
-
-            'total'                   => 0,
-
-            /*
-             * OpenCart order status.
-             * This is NOT the payment status.
-             */
-            'order_status_id'         => (int) $orderData['order_status_id'],
-
-            'affiliate_id'            => 0,
-            'marketing_id'            => 0,
-            'tracking'                => '',
-
-            'language_id'             => 1,
-
-            'currency_id'             => $currency['currency_id'],
-            'currency_code'           => $currency['code'],
-            'currency_value'          => $currency['value'],
-
-            'ip'                      => $request->getIPAddress(),
-            'user_agent'              => $request
-                ->getUserAgent()
-                ->getAgentString(),
-            'accept_language'         => $request
-                ->getServer('HTTP_ACCEPT_LANGUAGE'),
-
-            'date_added'              => $now,
-            'date_modified'           => $now
-        ];
-
-        /* Shipping address */
-        if (
-            !empty($orderData['shipping_same_as_payment'])
-        ) {
-            $order['shipping_firstname'] =
-                $orderData['payment_firstname'];
-
-            $order['shipping_lastname'] =
-                $orderData['payment_lastname'];
-
-            $order['shipping_company'] =
-                $orderData['payment_company'] ?? '';
-
-            $order['shipping_address_1'] =
-                $orderData['payment_address_1'];
-
-            $order['shipping_address_2'] =
-                $orderData['payment_address_2'] ?? '';
-
-            $order['shipping_city'] =
-                $orderData['payment_city'];
-
-            $order['shipping_postcode'] =
-                $orderData['payment_postcode'];
-
-            $order['shipping_country_id'] =
-                $orderData['payment_country_id'];
-
-            $order['shipping_zone_id'] =
-                $orderData['payment_zone_id'];
-
-            $order['shipping_method'] = '';
-            $order['shipping_code'] = '';
-
-        } else {
-            $order['shipping_firstname'] =
-                $orderData['shipping_firstname'];
-
-            $order['shipping_lastname'] =
-                $orderData['shipping_lastname'];
-
-            $order['shipping_company'] =
-                $orderData['shipping_company'] ?? '';
-
-            $order['shipping_address_1'] =
-                $orderData['shipping_address_1'];
-
-            $order['shipping_address_2'] =
-                $orderData['shipping_address_2'] ?? '';
-
-            $order['shipping_city'] =
-                $orderData['shipping_city'];
-
-            $order['shipping_postcode'] =
-                $orderData['shipping_postcode'];
-
-            $order['shipping_country_id'] =
-                $orderData['shipping_country_id'];
-
-            $order['shipping_zone_id'] =
-                $orderData['shipping_zone_id'];
-
-            $order['shipping_method'] =
-                $orderData['shipping_method'] ?? '';
-
-            $order['shipping_code'] =
-                $orderData['shipping_code'] ?? '';
-        }
-
-        /* Insert main order */
-        $this->db
-            ->table('oc_order')
-            ->insert($order);
-
-        $orderId = (int) $this->db->insertID();
-
-        if ($orderId <= 0) {
-            throw new Exception(
-                'Failed to create order.'
-            );
-        }
-
-        /* Products */
-        $subTotal = 0;
-        $taxTotal = 0;
-
-        if (
-            empty($orderData['products']) ||
-            !is_array($orderData['products'])
-        ) {
-            throw new Exception(
-                'At least one product is required.'
-            );
-        }
-
-        foreach ($orderData['products'] as $product) {
-
-            $quantity = (int) ($product['quantity'] ?? 0);
-            $price = (float) ($product['price'] ?? 0);
-            $taxPerUnit = (float) (
-                $product['tax_per_unit'] ?? 0
-            );
-
-            if ($quantity <= 0) {
+            if (!$currency) {
                 throw new Exception(
-                    'Product quantity must be greater than zero.'
+                    'Default currency INR was not found.'
                 );
             }
 
-            if ($price < 0) {
-                throw new Exception(
-                    'Product selling price cannot be negative.'
-                );
+            /* Request */
+            $request = service('request');
+
+            /* Main order */
+            $order = [
+                'invoice_no'              => 0,
+                'invoice_prefix'          => '',
+                'store_id'                => 0,
+                'store_name'              => 'URBANWOOD FURNITURE PRIVATE LIMITED',
+                'store_url'               => 'https://www.urbanwood.in/',
+
+                'customer_id'             => 0,
+                'customer_group_id'       => 1,
+
+                'firstname'               => $orderData['firstname'],
+                'lastname'                => $orderData['lastname'],
+                'email'                   => $orderData['email'],
+                'telephone'               => $orderData['telephone'],
+                'fax'                     => $orderData['fax'] ?? '',
+
+                'custom_field'            => '[]',
+
+                'payment_firstname'       => $orderData['payment_firstname'],
+                'payment_lastname'        => $orderData['payment_lastname'],
+                'payment_company'         => $orderData['payment_company'] ?? '',
+                'payment_address_1'       => $orderData['payment_address_1'],
+                'payment_address_2'       => $orderData['payment_address_2'] ?? '',
+                'payment_city'            => $orderData['payment_city'],
+                'payment_postcode'        => $orderData['payment_postcode'],
+                'payment_country'         => $orderData['payment_country'],
+                'payment_country_id'      => $orderData['payment_country_id'],
+                'payment_zone'            => $orderData['payment_zone'],
+                'payment_zone_id'         => $orderData['payment_zone_id'],
+                'payment_method'          => $orderData['payment_method'],
+                'payment_code'            => $orderData['payment_code'],
+                'payment_address_format'  => '',
+                'payment_custom_field'    => '[]',
+
+                'shipping_firstname'      => '',
+                'shipping_lastname'       => '',
+                'shipping_company'        => '',
+                'shipping_address_1'      => '',
+                'shipping_address_2'      => '',
+                'shipping_city'           => '',
+                'shipping_postcode'       => '',
+                'shipping_country_id'     => 0,
+                'shipping_zone_id'        => 0,
+                'shipping_method'         => '',
+                'shipping_code'           => '',
+                'shipping_address_format' => '',
+                'shipping_custom_field'   => '[]',
+
+                'comment'                 => $orderData['comment'] ?? '',
+
+                'total'                   => 0,
+
+                /* OpenCart order status. * This is NOT the payment status. */
+                'order_status_id'         => (int) $orderData['order_status_id'],
+
+                'affiliate_id'            => 0,
+                'marketing_id'            => 0,
+                'tracking'                => '',
+
+                'language_id'             => 1,
+
+                'currency_id'             => $currency['currency_id'],
+                'currency_code'           => $currency['code'],
+                'currency_value'          => $currency['value'],
+
+                'ip'                      => $request->getIPAddress(),
+                'user_agent'              => $request->getUserAgent()->getAgentString(),
+                'accept_language'         => $request->getServer('HTTP_ACCEPT_LANGUAGE'),
+
+                'date_added'              => $now,
+                'date_modified'           => $now
+            ];
+
+            /* Shipping address */
+            if (!empty($orderData['shipping_same_as_payment'])) {
+                $order['shipping_firstname'] = $orderData['payment_firstname'];
+                $order['shipping_lastname'] = $orderData['payment_lastname'];
+                $order['shipping_company'] = $orderData['payment_company'] ?? '';
+                $order['shipping_address_1'] = $orderData['payment_address_1'];
+                $order['shipping_address_2'] = $orderData['payment_address_2'] ?? '';
+                $order['shipping_city'] = $orderData['payment_city'];
+                $order['shipping_postcode'] = $orderData['payment_postcode'];
+                $order['shipping_country_id'] = $orderData['payment_country_id'];
+                $order['shipping_zone_id'] = $orderData['payment_zone_id'];
+                $order['shipping_method'] = '';
+                $order['shipping_code'] = '';
+
+            } else {
+                $order['shipping_firstname'] = $orderData['shipping_firstname'];
+                $order['shipping_lastname'] = $orderData['shipping_lastname'];
+                $order['shipping_company'] = $orderData['shipping_company'] ?? '';
+                $order['shipping_address_1'] = $orderData['shipping_address_1'];
+                $order['shipping_address_2'] = $orderData['shipping_address_2'] ?? '';
+                $order['shipping_city'] = $orderData['shipping_city'];
+                $order['shipping_postcode'] = $orderData['shipping_postcode'];
+                $order['shipping_country_id'] = $orderData['shipping_country_id'];
+                $order['shipping_zone_id'] = $orderData['shipping_zone_id'];
+                $order['shipping_method'] = $orderData['shipping_method'] ?? '';
+                $order['shipping_code'] = $orderData['shipping_code'] ?? '';
             }
 
-            $productTotal = $quantity * $price;
-            $productTax = $quantity * $taxPerUnit;
+            /* Insert main order */
+            $this->db->table('oc_order')->insert($order);
+            $orderId = (int) $this->db->insertID();
+            if ($orderId <= 0) {
+                throw new Exception('Failed to create order.');
+            }
 
-            $subTotal += $productTotal;
-            $taxTotal += $productTax;
+            /* Products */
+            $subTotal = 0;
+            $taxTotal = 0;
 
-            /* OpenCart order product */
-            $this->db
-                ->table('oc_order_product')
+            if (empty($orderData['products']) || !is_array($orderData['products'])) {
+                throw new Exception('At least one product is required.');
+            }
+
+            foreach ($orderData['products'] as $product) {
+
+                $quantity = (int) ($product['quantity'] ?? 0);
+                $price = (float) ($product['price'] ?? 0);
+                $taxPerUnit = (float) ($product['tax_per_unit'] ?? 0);
+
+                if ($quantity <= 0) {
+                    throw new Exception('Product quantity must be greater than zero.');
+                }
+
+                if ($price < 0) {
+                    throw new Exception('Product selling price cannot be negative.');
+                }
+
+                $productTotal = $quantity * $price;
+                $productTax = $quantity * $taxPerUnit;
+
+                $subTotal += $productTotal;
+                $taxTotal += $productTax;
+
+                /* OpenCart order product */
+                $this->db
+                    ->table('oc_order_product')
+                    ->insert([
+                        'order_id'   => $orderId,
+                        'product_id' => (int) (
+                            $product['product_id'] ?? 0
+                        ),
+                        'name'       => $product['name'],
+                        'model'      => $product['model'] ?? '',
+                        'quantity'   => $quantity,
+                        'price'      => $price,
+                        'total'      => $productTotal,
+                        'tax'        => $productTax,
+                        'reward'     => 0
+                    ]);
+
+                $orderProductId = (int) $this->db->insertID();
+
+                if ($orderProductId <= 0) {
+                    throw new Exception(
+                        'Failed to create order product.'
+                    );
+                }
+
+                /* CRM product information. Vendor price is the cost per unit charged by the vendor to Urbanwood. */
+                $vendorPrice = (float) ($product['vendor_price'] ?? 0 );
+
+                if ($vendorPrice < 0) {
+                    throw new Exception('Vendor price cannot be negative.');
+                }
+
+                $this->db->table('oc_crm_order_product')
+                    ->insert([
+                        'order_id'         => $orderId,
+                        'order_product_id' => $orderProductId,
+                        'vendor'           => $product['vendor'] ?? '',
+                        'vendor_price'     => $vendorPrice
+                    ]);
+            }
+
+            /* Subtotal */
+            $this->db->table('oc_order_total')
                 ->insert([
                     'order_id'   => $orderId,
-                    'product_id' => (int) (
-                        $product['product_id'] ?? 0
-                    ),
-                    'name'       => $product['name'],
-                    'model'      => $product['model'] ?? '',
-                    'quantity'   => $quantity,
-                    'price'      => $price,
-                    'total'      => $productTotal,
-                    'tax'        => $productTax,
-                    'reward'     => 0
+                    'code'       => 'sub_total',
+                    'title'      => 'Sub-Total',
+                    'value'      => $subTotal,
+                    'sort_order' => 1
                 ]);
 
-            $orderProductId = (int) $this->db->insertID();
-
-            if ($orderProductId <= 0) {
-                throw new Exception(
-                    'Failed to create order product.'
-                );
+            /* Tax */
+            if ($taxTotal > 0) {
+                $this->db->table('oc_order_total')
+                    ->insert([
+                        'order_id'   => $orderId,
+                        'code'       => 'tax',
+                        'title'      => 'Tax',
+                        'value'      => $taxTotal,
+                        'sort_order' => 4
+                    ]);
             }
 
-            /*
-             * CRM product information.
-             *
-             * Vendor price is the cost per unit charged
-             * by the vendor to Urbanwood.
-             */
-            $vendorPrice = (float) (
-                $product['vendor_price'] ?? 0
-            );
+            /* Grand total */
+            $shippingCost = 0;
 
-            if ($vendorPrice < 0) {
-                throw new Exception(
-                    'Vendor price cannot be negative.'
-                );
+            $grandTotal = $subTotal + $taxTotal + $shippingCost;
+
+
+            if ($grandTotal < 0) {
+                throw new Exception('Order total cannot be negative.');
             }
 
-            $this->db
-                ->table('oc_crm_order_product')
-                ->insert([
-                    'order_id'         => $orderId,
-                    'order_product_id' => $orderProductId,
-                    'vendor'           => $product['vendor'] ?? '',
-                    'vendor_price'     => $vendorPrice
-                ]);
-        }
-
-        /* Subtotal */
-        $this->db
-            ->table('oc_order_total')
-            ->insert([
-                'order_id'   => $orderId,
-                'code'       => 'sub_total',
-                'title'      => 'Sub-Total',
-                'value'      => $subTotal,
-                'sort_order' => 1
-            ]);
-
-        /* Tax */
-        if ($taxTotal > 0) {
-            $this->db
-                ->table('oc_order_total')
+            $this->db->table('oc_order_total')
                 ->insert([
                     'order_id'   => $orderId,
-                    'code'       => 'tax',
-                    'title'      => 'Tax',
-                    'value'      => $taxTotal,
-                    'sort_order' => 4
+                    'code'       => 'total',
+                    'title'      => 'Total',
+                    'value'      => $grandTotal,
+                    'sort_order' => 9
                 ]);
-        }
 
-        /* Grand total */
-        $shippingCost = 0;
+            /* Update order total */
+            $this->db->table('oc_order')
+                ->where('order_id', $orderId)
+                ->update([
+                    'total'         => $grandTotal,
+                    'date_modified' => $now
+                ]);
 
-        $grandTotal =
-            $subTotal +
-            $taxTotal +
-            $shippingCost;
-
-        // if (
-        //     isset($orderData['total_override']) &&
-        //     $orderData['total_override'] !== '' &&
-        //     is_numeric($orderData['total_override'])
-        // ) {
-        //     $grandTotal =
-        //         (float) $orderData['total_override'];
-        // }
-
-        if ($grandTotal < 0) {
-            throw new Exception(
-                'Order total cannot be negative.'
-            );
-        }
-
-        $this->db
-            ->table('oc_order_total')
-            ->insert([
-                'order_id'   => $orderId,
-                'code'       => 'total',
-                'title'      => 'Total',
-                'value'      => $grandTotal,
-                'sort_order' => 9
-            ]);
-
-        /* Update order total */
-        $this->db
-            ->table('oc_order')
-            ->where('order_id', $orderId)
-            ->update([
-                'total'         => $grandTotal,
-                'date_modified' => $now
-            ]);
-
-        /*
-         * CRM order information
-         */
-        $this->db
-            ->table('oc_crm_order')
-            ->insert([
-                'order_id'          => $orderId,
-                'created_by'        => $createdBy,
-                'date_added'       => $now,
-                'order_source'     => $orderData['order_source'] ?? '',
-                'dispatch_deadline' => !empty(
-                    $orderData['dispatch_deadline']
-                )
-                    ? $orderData['dispatch_deadline']
-                    : null,
-                'delivery_date'    => !empty(
-                    $orderData['delivery_date']
-                )
-                    ? $orderData['delivery_date']
-                    : null
-            ]);
-
-        $crmOrderId = (int) $this->db->insertID();
-
-        if ($crmOrderId <= 0) {
-            throw new Exception(
-                'Failed to create CRM order.'
-            );
-        }
-
-        /* CRM ownership */
-        // if (!$this->createCrmOrderOwnership(
-        //     $orderId,
-        //     $createdBy
-        // )) {
-        //     throw new Exception(
-        //         'Failed to save CRM order ownership.'
-        //     );
-        // }
-
-        /*
-         * Initial payment / advance.
-         *
-         * Zero advance is valid. In that case no payment
-         * record is created and payment status remains Pending.
-         */
-        $advance = 0;
-
-        if (
-            isset($orderData['advance']) &&
-            $orderData['advance'] !== '' &&
-            is_numeric($orderData['advance'])
-        ) {
-            $advance = (float) $orderData['advance'];
-        }
-
-        if ($advance < 0) {
-            throw new Exception(
-                'Advance amount cannot be negative.'
-            );
-        }
-
-        if ($advance > $grandTotal) {
-            throw new Exception(
-                'Advance cannot be greater than order total.'
-            );
-        }
-
-        if ($advance > 0) {
-
-            $paymentDate = $now;
-
-            if (!empty($orderData['payment_date'])) {
-                $paymentDate =
-                    $orderData['payment_date'];
-            }
-
-            $this->db
-                ->table('oc_crm_order_payment')
+            /* CRM order information */
+            $this->db->table('oc_crm_order')
                 ->insert([
                     'order_id'          => $orderId,
-                    'amount'             => $advance,
-                    'payment_method'     =>
-                        $orderData['payment_method'] ?? '',
-                    'payment_reference'  =>
-                        $orderData['payment_reference'] ?? '',
-                    'payment_date'       => $paymentDate,
-                    'comment'            =>
-                        $orderData['payment_comment'] ?? '',
-                    'created_by'         => $createdBy,
-                    'date_added'        => $now
+                    'created_by'        => $createdBy,
+                    'date_added'       => $now,
+                    'order_source'     => $orderData['order_source'] ?? '',
+                    'dispatch_deadline' => !empty(
+                        $orderData['dispatch_deadline']
+                    )
+                        ? $orderData['dispatch_deadline']
+                        : null,
+                    'delivery_date'    => !empty(
+                        $orderData['delivery_date']
+                    )
+                        ? $orderData['delivery_date']
+                        : null
                 ]);
 
-            $paymentId = (int) $this->db->insertID();
+            $crmOrderId = (int) $this->db->insertID();
 
-            if ($paymentId <= 0) {
+            if ($crmOrderId <= 0) {
+                throw new Exception('Failed to create CRM order.');
+            }
+
+            /* Initial payment / advance. Zero advance is valid. In that case no payment record is created and payment status remains Pending. */
+            $advance = 0;
+
+            if (isset($orderData['advance']) && $orderData['advance'] !== '' && is_numeric($orderData['advance'])) {
+                $advance = (float) $orderData['advance'];
+            }
+
+            if ($advance < 0) {
+                throw new Exception('Advance amount cannot be negative.');
+            }
+
+            if ($advance > $grandTotal) {
+                throw new Exception('Advance cannot be greater than order total.');
+            }
+
+            if ($advance > 0) {
+                $paymentDate = $now;
+
+                if (!empty($orderData['payment_date'])) {
+                    $paymentDate = $orderData['payment_date'];
+                }
+
+                $this->db->table('oc_crm_order_payment')
+                    ->insert([
+                        'order_id'          => $orderId,
+                        'amount'             => $advance,
+                        'payment_method'     => $orderData['payment_method'] ?? '',
+                        'payment_reference'  => $orderData['payment_reference'] ?? '',
+                        'payment_date'       => $paymentDate,
+                        'comment'            => $orderData['payment_comment'] ?? '',
+                        'created_by'         => $createdBy,
+                        'date_added'        => $now
+                    ]);
+
+                $paymentId = (int) $this->db->insertID();
+
+                if ($paymentId <= 0) {
+                    throw new Exception('Failed to save initial payment.');
+                }
+            }
+
+            /* Order history */
+            $username = session()->get('username');
+
+            if (!$username) {
+                $username = 'CRM User';
+            }
+
+            $comment = 'Order registered via CRM by ' . $username;
+
+            if (!empty($orderData['comment'])) {
+                $comment .= '. Internal Comment: ' . $orderData['comment'];
+            }
+
+            $this->db
+                ->table('oc_order_history')
+                ->insert([
+                    'order_id'        => $orderId,
+                    'order_status_id' => $order['order_status_id'],
+                    'notify'          => 0,
+                    'comment'         => $comment,
+                    'date_added'      => $now
+                ]);
+
+            /* Complete transaction */
+            $this->db->transComplete();
+
+            if (!$this->db->transStatus()) {
                 throw new Exception(
-                    'Failed to save initial payment.'
+                    'Order transaction failed.'
                 );
             }
+
+            return $orderId;
+
+        } catch (Exception $e) {
+
+            $this->db->transRollback();
+
+            log_message('error', 'CRM order creation failed: ' . $e->getMessage());
+
+            throw new Exception('Failed to create order: ' . $e->getMessage());
         }
-
-        /* Order history */
-        $username = session()->get('username');
-
-        if (!$username) {
-            $username = 'CRM User';
-        }
-
-        $comment =
-            'Order registered via CRM by ' .
-            $username;
-
-        if (!empty($orderData['comment'])) {
-            $comment .=
-                '. Internal Comment: ' .
-                $orderData['comment'];
-        }
-
-        $this->db
-            ->table('oc_order_history')
-            ->insert([
-                'order_id'        => $orderId,
-                'order_status_id' => $order['order_status_id'],
-                'notify'          => 0,
-                'comment'         => $comment,
-                'date_added'      => $now
-            ]);
-
-        /* Complete transaction */
-        $this->db->transComplete();
-
-        if (!$this->db->transStatus()) {
-            throw new Exception(
-                'Order transaction failed.'
-            );
-        }
-
-        return $orderId;
-
-    } catch (Exception $e) {
-
-        $this->db->transRollback();
-
-        log_message(
-            'error',
-            'CRM order creation failed: ' .
-            $e->getMessage()
-        );
-
-        throw new Exception(
-            'Failed to create order: ' .
-            $e->getMessage()
-        );
     }
-}
 
 
 
@@ -1155,7 +847,7 @@ public function createOrder(array $orderData, int $createdBy): int
         );
 
         $builder->where('p.order_id', $orderId);
-        $builder->orderBy('p.payment_date', 'ASC');
+        $builder->orderBy('p.payment_date', 'DESC');
 
         return $builder->get()->getResultArray(); 
     }
@@ -1279,14 +971,35 @@ public function createOrder(array $orderData, int $createdBy): int
                 'comment' => $comment
             ]);
     }
-    public function insertPayment(int $orderId, int $amount, string $paymentmethod, int $paymentreference, string $comment): bool {
-        return $this->db->table('oc_crm_order_payment')->insert([
+    public function addPayment(int $orderId, int $amount, string $paymentmethod, int $paymentreference, string $comment, ?string $paymentDate, int $createdBy): int {
+        $this->db->table('oc_crm_order_payment')->insert([
             'order_id'          => $orderId,
             'amount'            => $amount,
             'payment_method'    => $paymentmethod,
             'payment_reference' => $paymentreference,
             'comment'           => $comment,
-            'payment_date'        => date('Y-m-d H:i:s')
+            'payment_date'        => $paymentDate,
+            'created_by'        => $createdBy,
+            'date_added' => date('Y-m-d H:i:s')
         ]);
+        // print_r($this->db->insertID());
+        return $this->db->insertID();
+    }
+    public function getPayment($paymentId) {
+        return $this->db
+            ->table('oc_crm_order_payment p')
+            ->select('p.*, u.username AS created_by_name')
+            ->join('oc_user u', 'u.user_id = p.created_by', 'left')
+            ->where('p.payment_id', $paymentId)
+            ->get()
+            ->getRowArray();
+    }
+    public function getOrderTotal($orderId) {
+        return $this->db
+            ->table('oc_order')
+            ->select('total')
+            ->where('order_id', $orderId)
+            ->get()
+            ->getRow('total');
     }
 }
