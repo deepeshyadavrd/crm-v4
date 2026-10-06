@@ -150,40 +150,22 @@
                         <select name="order_source" class="form-select">
                             <option value="">Select Source</option>
                             <option value="CRM" 
-                                <?= (($formData['order_source'] ?? '') === 'CRM' )
-                                    ? 'selected'
-                                    : ''
-                                ?>> CRM 
+                                <?= (($formData['order_source'] ?? '') === 'CRM' ) ? 'selected' : '' ?>> CRM 
                             </option>
                             <option value="Website"
-                                <?= (($formData['order_source'] ?? '') === 'Website')
-                                    ? 'selected'
-                                    : ''
-                                ?>> Website
+                                <?= (($formData['order_source'] ?? '') === 'Website') ? 'selected' : '' ?>> Website
                             </option>
                             <option value="Phone"
-                                <?= (($formData['order_source'] ?? '') === 'Phone' )
-                                    ? 'selected'
-                                    : ''
-                                ?>> Phone
+                                <?= (($formData['order_source'] ?? '') === 'Phone' ) ? 'selected' : '' ?>> Phone
                             </option>
                             <option value="WhatsApp"
-                                <?= (($formData['order_source'] ?? ''))
-                                    ? 'selected'
-                                    : ''
-                                ?>>WhatsApp
+                                <?= (($formData['order_source'] ?? '')) ? 'selected' : '' ?>>WhatsApp
                             </option>
                             <option value="Walk-in"
-                                <?= (($formData['order_source'] ?? '') === 'Walk-in')
-                                    ? 'selected'
-                                    : ''
-                                ?>> Walk-in
+                                <?= (($formData['order_source'] ?? '') === 'Walk-in') ? 'selected' : '' ?>> Walk-in
                             </option>
                             <option value="Other"
-                                <?= (($formData['order_source'] ?? '') === 'Other' )
-                                    ? 'selected'
-                                    : ''
-                                ?>> Other
+                                <?= (($formData['order_source'] ?? '') === 'Other' ) ? 'selected' : '' ?>> Other
                             </option>
                         </select>
                     </div>
@@ -201,11 +183,7 @@
                             <option value=""> Select Status </option>
                             <?php foreach ($orderStatuses ?? [] as $status): ?>
                                 <option value="<?= (int) $status['order_status_id']; ?>"
-                                    <?= ((int) ($formData['order_status_id'] ?? 0) === (int) $status['order_status_id'])
-                                        ? 'selected'
-                                        : ''
-                                    ?>
-                                >
+                                    <?= ((int) ($formData['order_status_id'] ?? 0) === (int) $status['order_status_id']) ? 'selected' : '' ?> >
                                     <?= esc($status['name']); ?>
                                 </option>
                             <?php endforeach; ?>
@@ -251,180 +229,69 @@
                     </div>
                     <div class="col-md-4">
                         <label class="form-label"> Payment Status </label>
-                        <input type="text"
-                               id="paymentStatus"
-                               class="form-control"
-                               value="Pending"
-                               readonly>
-
+                        <input type="text" id="paymentStatus" class="form-control" value="Pending" readonly>
                     </div>
 
 
                     <div class="col-md-4">
-
                         <label class="form-label">
                             Payment Method
                         </label>
-
-                        <select name="payment_method"
-                                id="payment_method"
-                                class="form-select">
-
-                            <option value="">
-                                Select Payment Method
-                            </option>
-
-                            <option value="Cash">
-                                Cash
-                            </option>
-
-                            <option value="UPI">
-                                UPI
-                            </option>
-
-                            <option value="Bank Transfer">
-                                Bank Transfer
-                            </option>
-
-                            <option value="Card">
-                                Card
-                            </option>
-
-                            <option value="Cheque">
-                                Cheque
-                            </option>
-
-                            <option value="Other">
-                                Other
-                            </option>
-
+                        <select name="payment_method" id="payment_method" class="form-select">
+                            <option value=""> Select Payment Method </option>
+                            <option value="Cash"> Cash </option>
+                            <option value="UPI"> UPI </option>
+                            <option value="Bank Transfer"> Bank Transfer </option>
+                            <option value="Card"> Card </option>
+                            <option value="Cheque"> Cheque </option>
+                            <option value="Other"> Other </option>
                         </select>
-
                     </div>
-
 
                     <div class="col-md-4">
-
-                        <label class="form-label">
-                            Payment Reference
-                        </label>
-
-                        <input type="text"
-                               name="payment_reference"
-                               class="form-control"
-                               value="<?= esc(
-                                   $formData[
-                                       'payment_reference'
-                                   ] ?? ''
-                               ); ?>">
-
+                        <label class="form-label"> Payment Reference </label>
+                        <input type="text" name="payment_reference" class="form-control" value="<?= esc( $formData['payment_reference' ] ?? '' ); ?>">
                     </div>
-
+                    <div class="col-md-6">
+                        <label class="form-label"> Payment Date </label>
+                        <input type="date" name="payment_date" class="form-control" value="<?= esc($formData[ 'payment_date'] ?? date('Y-m-d')); ?>">
+                    </div>
 
                     <div class="col-md-6">
+                        <label class="form-label"> Payment Comment </label>
 
-                        <label class="form-label">
-                            Payment Date
-                        </label>
-
-                        <input type="date"
-                               name="payment_date"
-                               class="form-control"
-                               value="<?= esc(
-                                   $formData[
-                                       'payment_date'
-                                   ] ?? date('Y-m-d')
-                               ); ?>">
-
+                        <input type="text" name="payment_comment" class="form-control" value="<?= esc($formData['payment_comment'] ?? ''); ?>">
                     </div>
-
-
-                    <div class="col-md-6">
-
-                        <label class="form-label">
-                            Payment Comment
-                        </label>
-
-                        <input type="text"
-                               name="payment_comment"
-                               class="form-control"
-                               value="<?= esc(
-                                   $formData[
-                                       'payment_comment'
-                                   ] ?? ''
-                               ); ?>">
-
-                    </div>
-
                 </div>
-
             </div>
-
         </div>
 
-
-        <!-- ===================================================== -->
         <!-- INTERNAL COMMENT -->
-        <!-- ===================================================== -->
-
         <div class="card mb-3">
-
             <div class="card-header">
                 <strong>Internal Comment</strong>
             </div>
-
             <div class="card-body">
-
-                <textarea name="comment"
-                          class="form-control"
-                          rows="3"><?= esc(
-                              $formData['comment'] ?? ''
-                          ); ?></textarea>
-
+                <textarea name="comment" class="form-control" rows="3"><?= esc($formData['comment'] ?? '' ); ?></textarea>
             </div>
-
         </div>
 
-
-        <!-- ===================================================== -->
         <!-- SUBMIT -->
-        <!-- ===================================================== -->
-
         <div class="d-flex justify-content-end gap-2 mb-4">
-
-            <a href="<?= base_url('orders'); ?>"
-               class="btn btn-secondary">
-
-                Cancel
-
-            </a>
-
-            <button type="submit"
-                    class="btn btn-success"
-                    id="createOrderButton">
-
-                Create Order
-
-            </button>
-
+            <a href="<?= base_url('orders'); ?>" class="btn btn-secondary"> Cancel </a>
+            <button type="submit" class="btn btn-success" id="createOrderButton"> Create Order </button>
         </div>
-
     </form>
-
 </div>
 
-
 <script>
-
 document.addEventListener('DOMContentLoaded', function () {
-
     let productIndex = 0;
 
     /* Add product row */
-    document.getElementById('addProduct')
-        .addEventListener('click', function () {
-            addProductRow();
-        });
+    document.getElementById('addProduct').addEventListener('click', function () {
+        addProductRow();
+    });
 
     function addProductRow() {
 
@@ -439,30 +306,29 @@ document.addEventListener('DOMContentLoaded', function () {
         row.dataset.productRow = index;
         row.innerHTML = `
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <strong> Product ${index + 1} </strong>
+                <strong>Product ${index + 1}</strong>
                 <button type="button" class="btn btn-outline-danger btn-sm removeProduct"> Remove </button>
             </div>
-
-            <!-- Product Search -->
             <div class="row g-3">
                 <div class="col-md-8">
-                    <label class="form-label"> Product </label>
+                    <label class="form-label"> Product Name <span class="text-danger">*</span> </label>
                     <input type="text" name="products[${index}][name]" class="form-control productSearch" placeholder="Search product or enter custom product name" autocomplete="off" required>
 
                     <div class="list-group productSearchResults mt-1"></div>
-
                     <input type="hidden" name="products[${index}][product_id]" class="productId" value="0">
                     <input type="hidden" name="products[${index}][model]" class="productModel">
                     <small class="text-muted"> Select an existing product or enter a custom product name. </small>
                 </div>
+
                 <div class="col-md-4">
-                    <label class="form-label"> Quantity </label>
-                    <input type="number" name="products[${index}][quantity]" class="form-control productQuantity" value="1" min="1" step="1">
+                    <label class="form-label"> Quantity <span class="text-danger">*</span> </label>
+                    <input type="number" name="products[${index}][quantity]" class="form-control productQuantity" value="1" min="1" step="1" required>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label"> Selling Price </label>
-                    <input type="number" name="products[${index}][price]" class="form-control productPrice" value="0" min="0" step="0.01">
+                    <label class="form-label"> Selling Price <span class="text-danger">*</span> </label>
+                    <input type="number" name="products[${index}][price]" class="form-control productPrice" value="0" min="0" step="0.01" required>
                 </div>
+
                 <div class="col-md-4">
                     <label class="form-label"> Product Total </label>
                     <input type="text" class="form-control productTotal" value="0.00" readonly>
@@ -471,13 +337,16 @@ document.addEventListener('DOMContentLoaded', function () {
                     <label class="form-label"> Vendor </label>
                     <input type="text" name="products[${index}][vendor]" class="form-control" placeholder="Vendor / Manufacturer">
                 </div>
+
                 <div class="col-md-4">
                     <label class="form-label"> Vendor Price </label>
-                    <input type="number" name="products[${index}][vendor_price]" class="form-control" value="" min="0" step="0.01">
+                    <input type="number" name="products[${index}][vendor_price]" class="form-control" value="" min="0" step="0.01" placeholder="Not decided">
                     <small class="text-muted"> Per unit </small>
                 </div>
+
                 <div class="col-md-8">
                     <label class="form-label"> Approved 3D Design Files </label>
+
                     <input type="file" name="design_files[${index}][]" class="form-control" multiple accept="image/*,.pdf">
                     <small class="text-muted"> You can select multiple files. </small>
                 </div>
@@ -550,7 +419,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                     function () {
                                         searchInput.value = product.name;
                                         row.querySelector('.productId').value = product.id;
-                                        row.querySelector('.productName').value = product.name;
+                                        // row.querySelector('.productName').value = product.name;
                                         row.querySelector('.productModel').value = product.model || '';
 
                                         results.innerHTML = '';

@@ -149,7 +149,6 @@
                 <button type="button" class="btn btn-sm btn-primary" data-section="payment" data-bs-toggle="modal" data-bs-target="#editSectionModal"> Add Payment </button>
             <?php endif; ?>
         </div>
-
         <div class="card-body">
             <div class="row g-3 mb-3">
                 <div class="col-md-4">
@@ -182,54 +181,53 @@
                     </div>
                 </div>
             </div>
-                <div class="table-responsive">
-                    <table class="table table-sm table-bordered mb-0">
-                        <thead>
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered mb-0">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Amount</th>
+                            <th>Method</th>
+                            <th>Reference</th>
+                            <th>Comment</th>
+                            <th>Added By</th>
+                        </tr>
+                    </thead>
+                    <tbody id="paymentList">
+                    <?php if ($payments): ?>
+                        <?php foreach ($payments as $payment): ?>
                             <tr>
-                                <th>Date</th>
-                                <th>Amount</th>
-                                <th>Method</th>
-                                <th>Reference</th>
-                                <th>Comment</th>
-                                <th>Added By</th>
+                                <td>
+                                    <?= esc( $payment['payment_date'] ) ?>
+                                </td>
+                                <td>
+                                    <?= esc($order['currency_code'] ?? '') ?>
+                                    <?= number_format((float) $payment['amount'],2) ?>
+                                </td>
+                                <td>
+                                    <?= esc($payment['payment_method'] ?? '-') ?>
+                                </td>
+                                <td>
+                                    <?= esc($payment['payment_reference'] ?? '-') ?>
+                                </td>
+                                <td>
+                                    <?= esc($payment['comment'] ?? '-') ?>
+                                </td>
+                                <td>
+                                    <?= esc($payment['created_by_name'] ?? '-') ?>
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody id="paymentList">
-                        <?php if ($payments): ?>
-                            <?php foreach ($payments as $payment): ?>
-                                <tr>
-                                    <td>
-                                        <?= esc( $payment['payment_date'] ) ?>
-                                    </td>
-                                    <td>
-                                        <?= esc($order['currency_code'] ?? '') ?>
-                                        <?= number_format((float) $payment['amount'],2) ?>
-                                    </td>
-                                    <td>
-                                        <?= esc($payment['payment_method'] ?? '-') ?>
-                                    </td>
-                                    <td>
-                                        <?= esc($payment['payment_reference'] ?? '-') ?>
-                                    </td>
-                                    <td>
-                                        <?= esc($payment['comment'] ?? '-') ?>
-                                    </td>
-                                    <td>
-                                        <?= esc($payment['created_by_name'] ?? '-') ?>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        <?php else: ?> 
-                            <tr id="noPaymentsRow"> 
-                                <td colspan="6" class="text-muted"> No CRM payments recorded. </td> 
-                            </tr> 
-                        <?php endif; ?>
-                        </tbody>
-                    </table>
-                </div>
+                        <?php endforeach; ?>
+                    <?php else: ?> 
+                        <tr id="noPaymentsRow"> 
+                            <td colspan="6" class="text-muted"> No CRM payments recorded. </td> 
+                        </tr> 
+                    <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
-
 
     <!-- Products -->
     <div class="card mb-3">
@@ -242,7 +240,7 @@
                     <thead>
                         <tr>
                             <th>Product</th>
-                            <th>Model</th>
+                            <!-- <th>Model</th> -->
                             <th>Qty</th>
                             <th>Price</th>
                             <th>Total</th>
@@ -251,23 +249,21 @@
                             <th>Production PDF</th>
                         </tr>
                     </thead>
-
                     <tbody>
                         <?php foreach ($products as $product): ?>
                             <?php
                                 $orderProductId = (int) $product['order_product_id'];
+
                                 $crmProduct = $crmProducts[$orderProductId] ?? [];
                             ?>
 
                             <tr id="product-row-<?= $orderProductId ?>">
                                 <td>
-                                    <strong>
-                                        <?= esc( $product['name'] ) ?>
-                                    </strong>
+                                    <strong> <?= esc( $product['name'] ) ?> </strong>
                                 </td>
-                                <td>
+                                <!-- <td>
                                     <?= esc( $product['model'] ) ?>
-                                </td>
+                                </td> -->
                                 <td>
                                     <?= (int) $product['quantity'] ?>
                                 </td>
@@ -337,52 +333,31 @@
 
     <!-- Addresses -->
     <div class="row g-3 mb-3">
-
         <!-- Payment Address -->
         <div class="col-md-6">
-
             <div class="card h-100">
-
                 <div class="card-header">
                     <strong>Payment Address</strong>
                 </div>
-
                 <div class="card-body">
+                    <div>
+                        <?= esc($order['payment_firstname'] ?? '') ?>
+                        <?= esc($order['payment_lastname'] ?? '') ?>
+                    </div>
 
-                <div>
-                <?= esc(
-                    $order['payment_firstname'] ?? ''
-                ) ?>
-                <?= esc(
-                    $order['payment_lastname'] ?? ''
-                ) ?>
-            </div>
-
-            <?php if (!empty($order['payment_company'])): ?>
-
-                <div>
-                    <?= esc(
-                        $order['payment_company']
-                    ) ?>
-                </div>
-
-            <?php endif; ?>
-
-            <div>
-                <?= esc(
-                    $order['payment_address_1'] ?? ''
-                ) ?>
-            </div>
-
-            <?php if (!empty($order['payment_address_2'])): ?>
-
-                <div>
-                    <?= esc(
-                        $order['payment_address_2']
-                    ) ?>
-                </div>
-
-            <?php endif; ?>
+                    <?php if (!empty($order['payment_company'])): ?>
+                        <div>
+                            <?= esc($order['payment_company']) ?>
+                        </div>
+                    <?php endif; ?>
+                    <div>
+                        <?= esc($order['payment_address_1'] ?? '' ) ?>
+                    </div>
+                    <?php if (!empty($order['payment_address_2'])): ?>
+                        <div>
+                            <?= esc($order['payment_address_2'] ) ?>
+                        </div>
+                    <?php endif; ?>
 
             <div>
                 <?= esc(

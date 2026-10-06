@@ -132,6 +132,7 @@ class Orders extends WSController
         foreach ($order['crm_products'] ?? [] as $crmProduct) {
             $crmProducts[(int) $crmProduct['order_product_id']] = $crmProduct;
         }
+        // print_r($order['crm_products']);
         $data = [
             'title' => 'Order #' . $orderId,
             'order' => $order,
@@ -432,62 +433,57 @@ class Orders extends WSController
         $products = [];
 
         if (isset($post['products']) && is_array($post['products']) ) {
+
             foreach ($post['products'] as $product) {
 
-                $productId = (int) (
-                    $product['product_id'] ?? 0
-                );
+                $productId = (int) ($product['product_id'] ?? 0);
+                $name = trim((string) ($product['name'] ?? ''));
+                $model = trim((string) ($product['model'] ?? ''));
+                $quantity = (int) ($product['quantity'] ?? 0);
+                $price = (float) ($product['price'] ?? 0);
 
-                $quantity = (int) (
-                    $product['quantity'] ?? 0
-                );
-
-                $price = (float) (
-                    $product['price'] ?? 0
-                );
-
-                if ($productId <= 0) {
-                    continue;
+                /* Product name is required. */
+                if ($name === '') {
+                    throw new Exception('Product name is required.');
                 }
-
                 if ($quantity <= 0) {
-                    throw new Exception(
-                        'Invalid product quantity.'
-                    );
+                    throw new Exception('Invalid product quantity.');
+                }
+                if ($price < 0) {
+                    throw new Exception('Invalid product selling price.');
                 }
 
-                if ($price < 0) {
-                    throw new Exception(
-                        'Invalid product selling price.'
-                    );
+                /* Vendor is optional. */
+                $vendor = trim((string) ($product['vendor'] ?? ''));
+
+                /* Vendor price is optional.
+                 * NULL means vendor pricing has not been
+                 * decided yet. */
+                $vendorPrice = null;
+
+                if (isset($product['vendor_price']) && $product['vendor_price'] !== '' && is_numeric($product['vendor_price'])) {
+
+                    $vendorPrice = (float) $product['vendor_price'];
+
+                    if ($vendorPrice < 0) {
+                        throw new Exception('Vendor price cannot be negative.');
+                    }
                 }
 
                 $products[] = [
+
+                    /* Existing OpenCart product = actual ID. Custom product = 0. */
                     'product_id' => $productId,
-
-                    'name' => trim(
-                        (string) ($product['name'] ?? '')
-                    ),
-
-                    'model' => trim(
-                        (string) ($product['model'] ?? '')
-                    ),
-
+                    /* This is the actual order-specific product name. */
+                    'name' => $name,
+                    'model' => $model,
                     'quantity' => $quantity,
-
-                    /* Customer negotiated selling price. */
+                    /*Customer negotiated selling price. */
                     'price' => $price,
-
-                    /* Vendor / manufacturer. */
-                    'vendor' => trim(
-                        (string) ($product['vendor'] ?? '')
-                    ),
-
-                    /* Vendor's per-unit manufacturing cost. */
-                    'vendor_price' => (float) (
-                        $product['vendor_price'] ?? 0
-                    ),
-
+                    /*Vendor / manufacturer.*/
+                    'vendor' => $vendor !== '' ? $vendor : null,
+                    /* Vendor manufacturing cost. */
+                    'vendor_price' => $vendorPrice,
                     'tax_per_unit' => (float) (
                         $product['tax_per_unit'] ?? 0
                     )
@@ -500,20 +496,13 @@ class Orders extends WSController
             return redirect()
                 ->back()
                 ->withInput()
-                ->with(
-                    'error',
-                    'Please add at least one product.'
-                );
+                ->with( 'error', 'Please add at least one product.' );
         }
 
         /* Advance */
         $advance = 0;
 
-        if (
-            isset($post['advance']) &&
-            $post['advance'] !== '' &&
-            is_numeric($post['advance'])
-        ) {
+        if (isset($post['advance']) && $post['advance'] !== '' && is_numeric($post['advance'])) {
             $advance = (float) $post['advance'];
         }
 
@@ -531,172 +520,54 @@ class Orders extends WSController
         /* Prepare order data */
         $orderData = [
             /* Customer */
-            'firstname' => trim(
-                (string) ($post['firstname'] ?? '')
-            ),
-
-            'lastname' => trim(
-                (string) ($post['lastname'] ?? '')
-            ),
-
-            'email' => trim(
-                (string) ($post['email'] ?? '')
-            ),
-
-            'telephone' => trim(
-                (string) ($post['telephone'] ?? '')
-            ),
-
-            'fax' => trim(
-                (string) ($post['fax'] ?? '')
-            ),
-
+            'firstname' => trim((string) ($post['firstname'] ?? '')),
+            'lastname' => trim((string) ($post['lastname'] ?? '')),
+            'email' => trim((string) ($post['email'] ?? '')),
+            'telephone' => trim((string) ($post['telephone'] ?? '')),
+            'fax' => trim((string) ($post['fax'] ?? '')),
             /* Billing */
-            'payment_firstname' => trim(
-                (string) ($post['payment_firstname'] ?? '')
-            ),
-
-            'payment_lastname' => trim(
-                (string) ($post['payment_lastname'] ?? '')
-            ),
-
-            'payment_company' => trim(
-                (string) ($post['payment_company'] ?? '')
-            ),
-
-            'payment_address_1' => trim(
-                (string) ($post['payment_address_1'] ?? '')
-            ),
-
-            'payment_address_2' => trim(
-                (string) ($post['payment_address_2'] ?? '')
-            ),
-
-            'payment_city' => trim(
-                (string) ($post['payment_city'] ?? '')
-            ),
-
-            'payment_postcode' => trim(
-                (string) ($post['payment_postcode'] ?? '')
-            ),
-
-            'payment_country' => trim(
-                (string) ($post['payment_country'] ?? '')
-            ),
-
-            'payment_country_id' => (int) (
-                $post['payment_country_id'] ?? 0
-            ),
-
-            'payment_zone' => trim(
-                (string) ($post['payment_zone'] ?? '')
-            ),
-
-            'payment_zone_id' => (int) (
-                $post['payment_zone_id'] ?? 0
-            ),
-
-            'payment_method' => trim(
-                (string) ($post['payment_method'] ?? '')
-            ),
-
-            'payment_code' => trim(
-                (string) ($post['payment_code'] ?? '')
-            ),
-
+            'payment_firstname' => trim((string) ($post['payment_firstname'] ?? '')),
+            'payment_lastname' => trim((string) ($post['payment_lastname'] ?? '')),
+            'payment_company' => trim((string) ($post['payment_company'] ?? '')),
+            'payment_address_1' => trim((string) ($post['payment_address_1'] ?? '')),
+            'payment_address_2' => trim((string) ($post['payment_address_2'] ?? '')),
+            'payment_city' => trim((string) ($post['payment_city'] ?? '')),
+            'payment_postcode' => trim((string) ($post['payment_postcode'] ?? '')),
+            'payment_country' => trim((string) ($post['payment_country'] ?? '')),
+            'payment_country_id' => (int) ($post['payment_country_id'] ?? 0),
+            'payment_zone' => trim((string) ($post['payment_zone'] ?? '')),
+            'payment_zone_id' => (int) ($post['payment_zone_id'] ?? 0),
+            'payment_method' => trim((string) ($post['payment_method'] ?? '')),
+            'payment_code' => trim((string) ($post['payment_code'] ?? '')),
             /* Shipping */
-            'shipping_same_as_payment' => !empty(
-                $post['shipping_same_as_payment']
-            ),
-
-            'shipping_firstname' => trim(
-                (string) ($post['shipping_firstname'] ?? '')
-            ),
-
-            'shipping_lastname' => trim(
-                (string) ($post['shipping_lastname'] ?? '')
-            ),
-
-            'shipping_company' => trim(
-                (string) ($post['shipping_company'] ?? '')
-            ),
-
-            'shipping_address_1' => trim(
-                (string) ($post['shipping_address_1'] ?? '')
-            ),
-
-            'shipping_address_2' => trim(
-                (string) ($post['shipping_address_2'] ?? '')
-            ),
-
-            'shipping_city' => trim(
-                (string) ($post['shipping_city'] ?? '')
-            ),
-
-            'shipping_postcode' => trim(
-                (string) ($post['shipping_postcode'] ?? '')
-            ),
-
-            'shipping_country_id' => (int) (
-                $post['shipping_country_id'] ?? 0
-            ),
-
-            'shipping_zone_id' => (int) (
-                $post['shipping_zone_id'] ?? 0
-            ),
-
-            'shipping_method' => trim(
-                (string) ($post['shipping_method'] ?? '')
-            ),
-
-            'shipping_code' => trim(
-                (string) ($post['shipping_code'] ?? '')
-            ),
-
+            'shipping_same_as_payment' => !empty($post['shipping_same_as_payment']),
+            'shipping_firstname' => trim((string) ($post['shipping_firstname'] ?? '')),
+            'shipping_lastname' => trim((string) ($post['shipping_lastname'] ?? '')),
+            'shipping_company' => trim((string) ($post['shipping_company'] ?? '')),
+            'shipping_address_1' => trim((string) ($post['shipping_address_1'] ?? '')),
+            'shipping_address_2' => trim((string) ($post['shipping_address_2'] ?? '')),
+            'shipping_city' => trim((string) ($post['shipping_city'] ?? '')),
+            'shipping_postcode' => trim((string) ($post['shipping_postcode'] ?? '')),
+            'shipping_country_id' => (int) ($post['shipping_country_id'] ?? 0),
+            'shipping_zone_id' => (int) ($post['shipping_zone_id'] ?? 0),
+            'shipping_method' => trim((string) ($post['shipping_method'] ?? '')),
+            'shipping_code' => trim((string) ($post['shipping_code'] ?? '')),
             /* CRM */
-            'order_source' => trim(
-                (string) ($post['order_source'] ?? '')
-            ),
-
-            'dispatch_deadline' => !empty(
-                $post['dispatch_deadline']
-            )
-                ? $post['dispatch_deadline']
-                : null,
-
-            'delivery_date' => !empty(
-                $post['delivery_date']
-            )
-                ? $post['delivery_date']
-                : null,
+            'order_source' => trim((string) ($post['order_source'] ?? '')),
+            'dispatch_deadline' => !empty($post['dispatch_deadline']) ? $post['dispatch_deadline'] : null,
+            'delivery_date' => !empty($post['delivery_date']) ? $post['delivery_date'] : null,
 
             /* This goes directly to oc_order.order_status_id. */
-            'order_status_id' => (int) (
-                $post['order_status_id'] ?? 0
-            ),
+            'order_status_id' => (int) ( $post['order_status_id'] ?? 0 ),
 
             /* Payment */
             'advance' => $advance,
-
-            'payment_reference' => trim(
-                (string) ($post['payment_reference'] ?? '')
-            ),
-
-            'payment_date' => !empty(
-                $post['payment_date']
-            )
-                ? $post['payment_date']
-                : null,
-
-            'payment_comment' => trim(
-                (string) ($post['payment_comment'] ?? '')
-            ),
+            'payment_reference' => trim((string) ($post['payment_reference'] ?? '')),
+            'payment_date' => !empty($post['payment_date']) ? $post['payment_date'] : null,
+            'payment_comment' => trim((string) ($post['payment_comment'] ?? '')),
 
             /* Internal comment */
-            'comment' => trim(
-                (string) ($post['comment'] ?? '')
-            ),
-
+            'comment' => trim((string) ($post['comment'] ?? '')),
             /* Products */
             'products' => $products
         ];
@@ -707,9 +578,7 @@ class Orders extends WSController
             $orderId = $this->orderModel->createOrder($orderData, $this->userId);
 
             return redirect()
-                ->to(base_url(
-                    'orders/view/' . $orderId
-                ))
+                ->to(base_url('orders/view/' . $orderId))
                 ->with(
                     'success',
                     'Order created successfully.'
@@ -1064,4 +933,26 @@ class Orders extends WSController
                 'message'          => 'Payment added successfully.'
             ]);
     }
+    public function fileDownload($fileId) {
+    $file = $this->orderModel->getCrmOrderProductFile($fileId);
+
+    if (!$file) {
+        throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+    }
+
+    $filePath = WRITEPATH . $file['file_path'];
+
+    if (!is_file($filePath)) {
+        throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+    }
+
+    return $this->response
+        ->setHeader('Content-Type', $file['file_type'])
+        ->setHeader(
+            'Content-Disposition',
+            'inline; filename="' . $file['file_name'] . '"'
+        )
+        ->setHeader('Content-Length', (string) filesize($filePath))
+        ->setBody(file_get_contents($filePath));
+}
 }

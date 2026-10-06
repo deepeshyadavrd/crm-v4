@@ -250,6 +250,11 @@ class OrderModel extends Model {
         $order['products'] = $this->getOrderProducts($orderId);
         // print_r($order);
         $order['crm_products'] = $this->getCrmOrderProducts($orderId);
+        $order['crm_products'] = array_column(
+            $order['crm_products'],
+            null,
+            'order_product_id'
+        );
         $order['totals'] = $this->getOrderTotals($orderId);
         $order['ownership'] = $this->getCrmOrderOwner($orderId); 
         $order['payments'] = $this->getOrderPayments($orderId);
@@ -333,6 +338,9 @@ class OrderModel extends Model {
 
             /* Request */
             $request = service('request');
+
+            /* Uploaded product files */
+            $uploadedFiles = $request->getFiles()['design_files'] ?? [];
 
             /* Main order */
             $order = [
@@ -451,8 +459,12 @@ class OrderModel extends Model {
                 throw new Exception('At least one product is required.');
             }
 
-            foreach ($orderData['products'] as $product) {
-
+            foreach ($orderData['products'] as $productIndex => $product) {
+                $name = trim((string) ($product['name'] ?? ''));
+                
+                if ($name === '') {
+                    throw new Exception('Product name is required.');
+                }
                 $quantity = (int) ($product['quantity'] ?? 0);
                 $price = (float) ($product['price'] ?? 0);
                 $taxPerUnit = (float) ($product['tax_per_unit'] ?? 0);
@@ -476,10 +488,8 @@ class OrderModel extends Model {
                     ->table('oc_order_product')
                     ->insert([
                         'order_id'   => $orderId,
-                        'product_id' => (int) (
-                            $product['product_id'] ?? 0
-                        ),
-                        'name'       => $product['name'],
+                        'product_id' => (int) ( $product['product_id'] ?? 0 ),
+                        'name'       => $name,
                         'model'      => $product['model'] ?? '',
                         'quantity'   => $quantity,
                         'price'      => $price,
@@ -497,19 +507,91 @@ class OrderModel extends Model {
                 }
 
                 /* CRM product information. Vendor price is the cost per unit charged by the vendor to Urbanwood. */
-                $vendorPrice = (float) ($product['vendor_price'] ?? 0 );
+                // $vendorPrice = (float) ($product['vendor_price'] ?? 0 );
 
-                if ($vendorPrice < 0) {
-                    throw new Exception('Vendor price cannot be negative.');
-                }
+                // if ($vendorPrice < 0) {
+                //     throw new Exception('Vendor price cannot be negative.');
+                // }
 
                 $this->db->table('oc_crm_order_product')
                     ->insert([
                         'order_id'         => $orderId,
                         'order_product_id' => $orderProductId,
-                        'vendor'           => $product['vendor'] ?? '',
-                        'vendor_price'     => $vendorPrice
+                        'vendor'           => $product['vendor'] ?? null,
+                        'vendor_price'     => $product['vendor_price'] ?? null
                     ]);
+                    
+                /* Product design / production files */
+                $productFiles = $uploadedFiles[$productIndex] ?? [];
+
+                if (!is_array($productFiles)) {
+                    $productFiles = [$productFiles];
+                }
+
+                foreach ($productFiles as $file) {
+                    if (!$file || !$file->isValid()) {
+                        if ($file && $file->getError() !== UPLOAD_ERR_NO_FILE) {
+                            throw new Exception('Failed to upload product design file.');
+                        }
+                        continue;
+                    }
+
+                    /* Maximum file size: 10 MB */
+                    if ($file->getSize() > 10 * 1024 * 1024) {
+                        throw new Exception('Product design file cannot exceed 10 MB.');
+                    }
+
+                    /* Allow PDF and common image files. */
+                    $allowedTypes = [
+                        'application/pdf',
+                        'image/jpeg',
+                        'image/png',
+                        'image/webp'
+                    ];
+
+                    $mimeType = $file->getMimeType();
+
+                    if (!in_array($mimeType, $allowedTypes, true)) {
+                        throw new Exception('Invalid product design file type.');
+                    }
+
+                    /* Store files outside the public folder. */
+                    $uploadPath = WRITEPATH . 'uploads/order_designs/' . $orderId . '/' . $orderProductId . '/';
+
+                    if (!is_dir($uploadPath)) {
+                        if (!mkdir($uploadPath, 0755, true) && !is_dir($uploadPath)) {
+                            throw new Exception('Failed to create product design upload directory.');
+                        }
+                    }
+
+                    /* Generate a safe random filename. */
+                    $newFileName = $file->getRandomName();
+
+                    /* Move uploaded file. */
+                    if (!$file->move($uploadPath, $newFileName)) {
+                        throw new Exception('Failed to save product design file.');
+                    }
+
+                    $storedPath = 'uploads/order_designs/' . $orderId . '/' . $orderProductId . '/' . $newFileName;
+
+                    /* Save file information against this exact order product. */
+                    $this->db
+                        ->table('oc_crm_order_product_file')
+                        ->insert([
+                            'order_id'         => $orderId,
+                            'order_product_id' => $orderProductId,
+                            'file_name'        => $file->getClientName(),
+                            'file_path'        => $storedPath,
+                            'file_type'        => $mimeType,
+                            'file_size'        => $file->getSize(),
+                            'uploaded_by'      => $createdBy,
+                            'date_added'       => $now
+                        ]);
+
+                    if ($this->db->affectedRows() <= 0) {
+                        throw new Exception('Failed to save product design file information.');
+                    }
+                }
             }
 
             /* Subtotal */
@@ -895,6 +977,15 @@ class OrderModel extends Model {
             ->get()
             ->getResultArray();
     }
+    public function getCrmOrderProductFile($fileId)
+{
+    return $this->db->table('oc_crm_order_product_file cpf')
+        ->select('cpf.*, u.username, u.firstname, u.lastname')
+        ->join('oc_user u', 'u.user_id = cpf.uploaded_by', 'left')
+        ->where('cpf.crm_order_product_file_id', (int) $fileId)
+        ->get()
+        ->getRowArray();
+}
     public function updateCrmOrderProduct( int $orderId, int $orderProductId, string $vendor, float $vendorPrice ): bool {
     
         $builder = $this->db
