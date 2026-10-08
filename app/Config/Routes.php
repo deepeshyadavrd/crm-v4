@@ -40,7 +40,7 @@ $routes->post('orders/status/(:num)', 'Orders::status/$1');
 $routes->get('orders/create', 'Orders::create');
 $routes->post('orders/create', 'Orders::create');
 $routes->post('orders/update/(:num)', 'Orders::update/$1');
-$routes->post('orders/product/update/(:num)/(:num)', 'Orders::productUpdate/$1/$2');
+$routes->post('orders/product/update', 'OrderController::productUpdate');
 $routes->get('orders/file/download/(:num)', 'Orders::fileDownload/$1');
 
 /* product */

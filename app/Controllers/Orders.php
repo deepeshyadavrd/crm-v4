@@ -602,91 +602,76 @@ class Orders extends WSController
         }
     }
 
-    public function productUpdate( int $orderId = 0, int $orderProductId = 0 ) {
-    
-        if ( $orderId <= 0 || $orderProductId <= 0 ) {
+    public function productUpdate() {
+        if (!$this->request->isAJAX()) {
+            return $this->response->setStatusCode(400);
+        }
 
-            return redirect()
-                ->to(site_url('orders'))
-                ->with(
-                    'error',
-                    'Invalid product.'
-                );
-        }
-    
-        /* User must have edit permission. */
-        if (!$this->canEdit) {
-    
-            return $this->response
-            ->setStatusCode(403)
-            ->setJSON([
+        $orderId = (int) $this->request->getPost('order_id');
+        $orderProductId = (int) $this->request->getPost('order_product_id');
+
+        $name = trim((string) $this->request->getPost('name'));
+        $quantity = (int) $this->request->getPost('quantity');
+        $price = (float) $this->request->getPost('price');
+
+        $vendor = trim((string) $this->request->getPost('vendor'));
+        $vendor = $vendor !== '' ? $vendor : null;
+
+        $vendorPriceInput = $this->request->getPost('vendor_price');
+        $vendorPrice = ($vendorPriceInput !== '' && $vendorPriceInput !== null)
+            ? (float) $vendorPriceInput
+            : null;
+
+        if (
+            $orderId <= 0 ||
+            $orderProductId <= 0 ||
+            $name === '' ||
+            $quantity < 1 ||
+            $price < 0
+        ) {
+            return $this->response->setJSON([
                 'success' => false,
-                'message' =>
-                    'You do not have permission to edit this order.'
+                'message' => 'Please enter valid product details.'
             ]);
         }
-    
-        /* Check order access. */
-        if (!$this->orderModel->canAccessOrder( $orderId, $this->scope, $this->userId )) {
-    
-            return $this->response
-            ->setStatusCode(403)
-            ->setJSON([
+
+        if ($vendorPrice !== null && $vendorPrice < 0) {
+            return $this->response->setJSON([
                 'success' => false,
-                'message' =>
-                    'You do not have access to this order.'
+                'message' => 'Vendor price cannot be negative.'
             ]);
         }
-    
-        $vendor = trim( (string) $this->request->getPost('vendor'));
-    
-        $vendorPrice = (float) $this->request->getPost('vendor_price');
-    
-        if ($vendorPrice < 0) {
-    
-            return $this->response
-            ->setStatusCode(422)
-            ->setJSON([
-                'success' => false,
-                'message' =>
-                    'Vendor price cannot be negative.'
-            ]);
-        }
-    
-        $updated =
-            $this->orderModel->updateCrmOrderProduct(
-                $orderId,
-                $orderProductId,
-                $vendor,
-                $vendorPrice
-            );
-    
-    
+
+        $updated = $this->orderModel->updateCrmOrderProduct(
+            $orderId,
+            $orderProductId,
+            $name,
+            $quantity,
+            $price,
+            $vendor,
+            $vendorPrice
+        );
+
         if (!$updated) {
-            return $this->response
-            ->setStatusCode(500)
-            ->setJSON([
+            return $this->response->setJSON([
                 'success' => false,
-                'message' =>
-                    'Product information could not be updated.'
+                'message' => 'Unable to update product.'
             ]);
         }
-    
-    
-        return $this->response
-        ->setJSON([
+
+        return $this->response->setJSON([
             'success' => true,
-            'message' =>
-                'Product information updated successfully.',
-            'vendor' =>
-                $vendor,
-            'vendor_price' =>
-                number_format(
-                    $vendorPrice,
-                    2,
-                    '.',
-                    ''
-                )
+            'message' => 'Product updated successfully.',
+            'data' => [
+                'name'         => $name,
+                'quantity'     => $quantity,
+                'price'        => number_format($price, 2, '.', ''),
+                'total'        => number_format($quantity * $price, 2, '.', ''),
+                'vendor'       => $vendor ?? '',
+                'vendor_price' => $vendorPrice !== null
+                    ? number_format($vendorPrice, 2, '.', '')
+                    : ''
+            ]
         ]);
     }
     public function update(int $orderId = 0) {
@@ -725,7 +710,7 @@ class Orders extends WSController
         }
 
         /* Identify which order section is being updated. */
-        $section = trim( (string) $this->request->getPost( 'section' ) );
+        $section = trim( (string) $this->request->getPost('section') );
 
         if ($section === '') {
 
@@ -752,6 +737,8 @@ class Orders extends WSController
             
             case 'payment':
                 return $this->insertPayment($orderId);
+            case 'product':
+                return $this->updateProductSection($orderId);
 
             case 'payment-address':
                 return $this->updatePaymentAddressSection($orderId);
@@ -934,25 +921,126 @@ class Orders extends WSController
             ]);
     }
     public function fileDownload($fileId) {
-    $file = $this->orderModel->getCrmOrderProductFile($fileId);
+        $file = $this->orderModel->getCrmOrderProductFile($fileId);
 
-    if (!$file) {
-        throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+        if (!$file) {
+            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+        }
+
+        $filePath = WRITEPATH . $file['file_path'];
+
+        if (!is_file($filePath)) {
+            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+        }
+
+        return $this->response
+            ->setHeader('Content-Type', $file['file_type'])
+            ->setHeader(
+                'Content-Disposition',
+                'inline; filename="' . $file['file_name'] . '"'
+            )
+            ->setHeader('Content-Length', (string) filesize($filePath))
+            ->setBody(file_get_contents($filePath));
     }
+    private function updateProductSection(int $orderId) {
+        $orderProductId = (int) $this->request->getPost('order_product_id');
+        $name = trim((string) $this->request->getPost('name'));
+        $quantity = (int) $this->request->getPost('quantity');
+        $price = (float) $this->request->getPost('price');
+        $vendor = trim((string) $this->request->getPost('vendor'));
+        $vendorPriceInput = $this->request->getPost('vendor_price');
+        $vendorPrice = ($vendorPriceInput === '' || $vendorPriceInput === null)
+            ? null
+            : (float) $vendorPriceInput;
 
-    $filePath = WRITEPATH . $file['file_path'];
 
-    if (!is_file($filePath)) {
-        throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+        if ($orderProductId <= 0) {
+
+            return $this->response
+                ->setStatusCode(400)
+                ->setJSON([
+                    'success' => false,
+                    'message' => 'Invalid product.'
+                ]);
+        }
+
+        if ($name === '') {
+
+            return $this->response
+                ->setStatusCode(400)
+                ->setJSON([
+                    'success' => false,
+                    'message' => 'Product name is required.'
+                ]);
+        }
+
+        if ($quantity <= 0) {
+
+            return $this->response
+                ->setStatusCode(400)
+                ->setJSON([
+                    'success' => false,
+                    'message' => 'Quantity must be greater than zero.'
+                ]);
+        }
+
+        if ($price < 0) {
+
+            return $this->response
+                ->setStatusCode(400)
+                ->setJSON([
+                    'success' => false,
+                    'message' => 'Price cannot be negative.'
+                ]);
+        }
+
+        if ($vendorPrice !== null && $vendorPrice < 0) {
+
+            return $this->response
+                ->setStatusCode(400)
+                ->setJSON([
+                    'success' => false,
+                    'message' => 'Vendor price cannot be negative.'
+                ]);
+        }
+
+
+        $updated = $this->orderModel->updateCrmOrderProduct(
+            $orderId,
+            $orderProductId,
+            $name,
+            $quantity,
+            $price,
+            $vendor,
+            $vendorPrice
+        );
+
+
+        if (!$updated) {
+
+            return $this->response
+                ->setStatusCode(400)
+                ->setJSON([
+                    'success' => false,
+                    'message' => 'Unable to update product.'
+                ]);
+        }
+
+
+        $total = $quantity * $price;
+
+
+        return $this->response
+            ->setJSON([
+                'success' => true,
+                'section' => 'product',
+                'order_product_id' => $orderProductId,
+                'name' => $name,
+                'quantity' => $quantity,
+                'price' => $price,
+                'total' => $total,
+                'vendor' => $vendor,
+                'vendor_price' => $vendorPrice
+            ]);
     }
-
-    return $this->response
-        ->setHeader('Content-Type', $file['file_type'])
-        ->setHeader(
-            'Content-Disposition',
-            'inline; filename="' . $file['file_name'] . '"'
-        )
-        ->setHeader('Content-Length', (string) filesize($filePath))
-        ->setBody(file_get_contents($filePath));
-}
 }

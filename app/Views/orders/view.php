@@ -246,6 +246,7 @@
                             <th>Total</th>
                             <th>Vendor</th>
                             <th>Vendor Price</th>
+                            <th>Action</th>
                             <th>Production PDF</th>
                         </tr>
                     </thead>
@@ -259,48 +260,45 @@
 
                             <tr id="product-row-<?= $orderProductId ?>">
                                 <td>
-                                    <strong> <?= esc( $product['name'] ) ?> </strong>
+                                    <div id="product-name-<?= $orderProductId ?>">
+                                        <strong> <?= esc( $product['name'] ) ?> </strong>
+                                    </div>
                                 </td>
                                 <!-- <td>
                                     <?= esc( $product['model'] ) ?>
                                 </td> -->
-                                <td>
+                                <td id="product-quantity-<?= $orderProductId ?>">
                                     <?= (int) $product['quantity'] ?>
                                 </td>
                                 <td>
-                                    <?= esc( $order['currency_code'] ?? '' ) ?>
-                                    <?= number_format( (float) $product['price'], 2 ) ?>
+                                    <span id="product-price-<?= $orderProductId ?>">
+                                        <?= esc( $order['currency_code'] ?? '' ) ?>
+                                        <?= number_format( (float) $product['price'], 2 ) ?>
+                                    </span>
                                 </td>
                                 <td>
-                                    <?= esc( $order['currency_code'] ?? '' ) ?>
-                                    <?= number_format( (float) $product['total'], 2 ) ?>
+                                    <span id="product-total-<?= $orderProductId ?>">
+                                        <?= esc( $order['currency_code'] ?? '' ) ?>
+                                        <?= number_format( (float) $product['total'], 2 ) ?>
+                                    </span>
                                 </td>
                                 <td>
-                                    <div id="vendor-<?= $orderProductId ?>" >
-                                        <?php if ($canEdit): ?>
-                                            <input type="text" name="vendor" value="<?= esc( $crmProduct['vendor'] ?? '' ) ?>" class="form-control form-control-sm mb-2" form="product-form-<?= $orderProductId ?>" placeholder="Vendor">
+                                    <div id="product-vendor-<?= $orderProductId ?>" >
+                                        <?= esc( $crmProduct['vendor'] ?? '' ) ?>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div id="product-vendor-price-<?= $orderProductId ?>" >
+                                        <?php if ($crmProduct['vendor_price'] !== null && $crmProduct['vendor_price'] !== ''): ?>
+                                        <?= esc($order['currency_code'] ?? '') ?>
+                                        <?= number_format((float) $crmProduct['vendor_price'], 2) ?>
                                         <?php else: ?>
-                                            <?= esc( $crmProduct['vendor'] ?? '-' ) ?>
+                                            -
                                         <?php endif; ?>
                                     </div>
                                 </td>
                                 <td>
-                                    <div id="vendor-price-<?= $orderProductId ?>" >
-                                        <?php if ($canEdit): ?>
-                                            <input type="number" name="vendor_price" value="<?= esc( $crmProduct['vendor_price'] ?? '' ) ?>" class="form-control form-control-sm" form="product-form-<?= $orderProductId ?>" min="0" step="0.01" placeholder="Vendor price">
-                                                
-                                        <?php else: ?>
-                                            <?= esc( $order['currency_code'] ?? '' ) ?>
-                                            <?= number_format((float) ( $crmProduct['vendor_price'] ?? 0 ), 2 ) ?>
-                                        <?php endif; ?>
-                                    </div>
-                                    <?php if ($canEdit): ?>
-                                        <form id="product-form-<?= $orderProductId ?>" class="product-update-form mt-2" data-order-id="<?= (int) $order['order_id'] ?>" data-order-product-id="<?= $orderProductId ?>" >
-                                            <?= csrf_field() ?>
-                                            <button type="submit" class="btn btn-sm btn-primary" > Save </button>
-                                            <span class="small ms-2 product-update-message" ></span>
-                                        </form>
-                                    <?php endif; ?>
+                                    <button type="button"class="btn btn-sm btn-outline-primary edit-section" data-section="product"  data-order-product-id="<?= $orderProductId ?>" data-bs-toggle="modal" data-bs-target="#editSectionModal">Edit</button>
                                 </td>
                                 <td>
                                     <?php $files = $crmProduct['files'] ?? []; ?>
@@ -1016,6 +1014,59 @@ const editSectionSave = document.getElementById( 'editSectionSave' );
                     <input type="text" class="form-control" name="payment_comment" id="addPaymentcomment">
                 </div>
             `;
+        }
+        if (section === 'product') {
+
+            const orderProductId = button.dataset.orderProductId;
+
+            editSectionTitle.textContent = 'Edit Product';
+
+            editSectionBody.innerHTML = `
+                <input type="hidden" name="order_product_id" id="editOrderProductId">
+
+                <div class="mb-3">
+                    <label class="form-label">Product Name</label>
+                    <input type="text" name="name" id="editProductName" class="form-control" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Quantity</label>
+                    <input type="number" name="quantity" id="editProductQuantity" class="form-control" min="1" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Price</label>
+                    <input type="number" name="price" id="editProductPrice" class="form-control" min="0" step="0.01" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Vendor</label>
+                    <input type="text" name="vendor" id="editProductVendor" class="form-control">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Vendor Price</label>
+                    <input type="number" name="vendor_price" id="editProductVendorPrice" class="form-control" min="0" step="0.01">
+                </div>
+            `;
+
+            document.getElementById('editOrderProductId').value = orderProductId;
+            document.getElementById('editProductName').value = document.getElementById('product-name-' + orderProductId).textContent.trim();
+            document.getElementById('editProductQuantity').value = document.getElementById('product-quantity-' + orderProductId).textContent.trim();
+
+            let price = document.getElementById('product-price-' + orderProductId).textContent.trim();
+
+            price = price.replace(/[^\d.-]/g, '');
+            document.getElementById('editProductPrice').value = price;
+            document.getElementById('editProductVendor').value = document.getElementById('product-vendor-' + orderProductId).textContent.trim();
+            let vendorPrice = document.getElementById('product-vendor-price-' + orderProductId).textContent.trim();
+            vendorPrice = vendorPrice.replace(/[^\d.-]/g, '');
+
+            if (vendorPrice === '-') {
+                vendorPrice = '';
+            }
+
+            document.getElementById('editProductVendorPrice').value = vendorPrice;
         }
     });
 

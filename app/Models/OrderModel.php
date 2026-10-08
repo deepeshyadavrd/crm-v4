@@ -977,54 +977,121 @@ class OrderModel extends Model {
             ->get()
             ->getResultArray();
     }
-    public function getCrmOrderProductFile($fileId)
-{
-    return $this->db->table('oc_crm_order_product_file cpf')
-        ->select('cpf.*, u.username, u.firstname, u.lastname')
-        ->join('oc_user u', 'u.user_id = cpf.uploaded_by', 'left')
-        ->where('cpf.crm_order_product_file_id', (int) $fileId)
-        ->get()
-        ->getRowArray();
-}
-    public function updateCrmOrderProduct( int $orderId, int $orderProductId, string $vendor, float $vendorPrice ): bool {
+    public function getCrmOrderProductFile($fileId) {
+        return $this->db->table('oc_crm_order_product_file cpf')
+            ->select('cpf.*, u.username, u.firstname, u.lastname')
+            ->join('oc_user u', 'u.user_id = cpf.uploaded_by', 'left')
+            ->where('cpf.crm_order_product_file_id', (int) $fileId)
+            ->get()
+            ->getRowArray();
+    }
+    public function updateCrmOrderProduct(
+        int $orderId,
+        int $orderProductId,
+        string $name,
+        int $quantity,
+        float $price,
+        ?string $vendor,
+        ?float $vendorPrice
+    ): bool {
     
-        $builder = $this->db
-            ->table('oc_crm_order_product');
-    
-        $existing = $builder
-            ->where(
-                'order_id',
-                $orderId
-            )
-            ->where(
-                'order_product_id',
-                $orderProductId
-            )
+        $orderProduct = $this->db
+            ->table('oc_order_product')
+            ->select('order_product_id')
+            ->where('order_id', $orderId)
+            ->where('order_product_id', $orderProductId)
             ->get()
             ->getRowArray();
     
-        if (!$existing) {
-    
+        if (!$orderProduct) {
             return false;
         }
     
-        return $this->db
-            ->table('oc_crm_order_product')
-            ->where(
-                'order_id',
-                $orderId
-            )
-            ->where(
-                'order_product_id',
-                $orderProductId
-            )
-            ->update([
-                'vendor' =>
-                    $vendor,
+        $total = $quantity * $price;
     
-                'vendor_price' =>
-                    $vendorPrice
+        $this->db->transStart();
+    
+        /* Update OpenCart order product */
+        $this->db
+            ->table('oc_order_product')
+            ->where('order_id', $orderId)
+            ->where('order_product_id', $orderProductId)
+            ->update([
+                'name'     => $name,
+                'quantity' => $quantity,
+                'price'    => $price,
+                'total'    => $total
             ]);
+    
+        /* Update / create CRM product data */
+        $crmExists = $this->db
+            ->table('oc_crm_order_product')
+            ->select('crm_order_product_id')
+            ->where('order_id', $orderId)
+            ->where('order_product_id', $orderProductId)
+            ->get()
+            ->getRowArray();
+    
+        if ($crmExists) {
+    
+            $this->db
+                ->table('oc_crm_order_product')
+                ->where('order_id', $orderId)
+                ->where('order_product_id', $orderProductId)
+                ->update([
+                    'vendor'       => $vendor ?: null,
+                    'vendor_price' => $vendorPrice
+                ]);
+    
+        } else {
+    
+            $this->db
+                ->table('oc_crm_order_product')
+                ->insert([
+                    'order_id'         => $orderId,
+                    'order_product_id' => $orderProductId,
+                    'vendor'           => $vendor ?: null,
+                    'vendor_price'     => $vendorPrice
+                ]);
+        }
+    
+        /*
+         * Recalculate complete order total
+         * from all products.
+         */
+        $orderTotalRow = $this->db
+            ->table('oc_order_product')
+            ->selectSum('total', 'order_total')
+            ->where('order_id', $orderId)
+            ->get()
+            ->getRowArray();
+    
+        $orderTotal = (float) ($orderTotalRow['order_total'] ?? 0);
+    
+        /* Update oc_order */
+        $this->db
+            ->table('oc_order')
+            ->where('order_id', $orderId)
+            ->update([
+                'total' => $orderTotal
+            ]);
+    
+        /* Update oc_order_total */
+        $this->db
+            ->table('oc_order_total')
+            ->where('order_id', $orderId)
+            ->where('code', 'total')
+            ->update([
+                'value' => $orderTotal,
+                'text'  => $this->currency->format(
+                    $orderTotal,
+                    $this->config->get('config_currency')
+                )
+            ]);
+    
+        $this->db->transComplete();
+    
+        return $this->db->transStatus();
     }
     public function updateCrmOrderDetails( int $orderId, string $orderSource, ?string $dispatchDeadline, ?string $deliveryDate ): bool {
     
