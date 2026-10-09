@@ -184,7 +184,6 @@ class OrderModel extends Model {
             ->countAllResults() > 0;
     }
 
-
     /* CRM ORDER OWNERSHIP */
     public function getCrmOrderOwner(int $orderId): ?array {
         $owner = $this->db
@@ -242,10 +241,6 @@ class OrderModel extends Model {
             return null;
         }
 
-        // $order['products'] = $this->getOrderProducts($orderId);
-        // $order['totals'] = $this->getOrderTotals($orderId);
-        // $order['ownership'] = $this->getCrmOrderOwner($orderId);
-
         // return $order;
         $order['products'] = $this->getOrderProducts($orderId);
         // print_r($order);
@@ -282,7 +277,6 @@ class OrderModel extends Model {
         return $products;
     }
 
-
     public function getOrderOptions( int $orderId, int $orderProductId ): array {
         return $this->db
             ->table('oc_order_option')
@@ -291,7 +285,6 @@ class OrderModel extends Model {
             ->get()
             ->getResultArray();
     }
-
 
     /* ORDER TOTALS */
     public function getOrderTotals(int $orderId): array {
@@ -302,7 +295,6 @@ class OrderModel extends Model {
             ->get()
             ->getResultArray();
     }
-
 
     /* ORDER HISTORY */
     public function getOrderHistory(int $orderId): array {
@@ -315,7 +307,6 @@ class OrderModel extends Model {
             ->get()
             ->getResultArray();
     }
-
 
     /* CREATE ORDER */
     public function createOrder(array $orderData, int $createdBy): int {
@@ -331,9 +322,7 @@ class OrderModel extends Model {
             $currency = $this->db->table('oc_currency')->where('code', 'INR')->get()->getRowArray();
 
             if (!$currency) {
-                throw new Exception(
-                    'Default currency INR was not found.'
-                );
+                throw new Exception('Default currency INR was not found.');
             }
 
             /* Request */
@@ -507,12 +496,6 @@ class OrderModel extends Model {
                 }
 
                 /* CRM product information. Vendor price is the cost per unit charged by the vendor to Urbanwood. */
-                // $vendorPrice = (float) ($product['vendor_price'] ?? 0 );
-
-                // if ($vendorPrice < 0) {
-                //     throw new Exception('Vendor price cannot be negative.');
-                // }
-
                 $this->db->table('oc_crm_order_product')
                     ->insert([
                         'order_id'         => $orderId,
@@ -752,36 +735,23 @@ class OrderModel extends Model {
             throw new Exception('Failed to create order: ' . $e->getMessage());
         }
     }
-
-
-
-
     /* COUNTRIES */
 
-    public function getCountries(): array
-    {
+    public function getCountries(): array {
         return $this->db
             ->table('oc_country')
-            ->select([
-                'country_id',
-                'name'
-            ])
+            ->select(['country_id','name'])
             ->where('status', 1)
             ->orderBy('name', 'ASC')
             ->get()
             ->getResultArray();
     }
 
-
     /* ZONES */
-
     public function getZonesByCountry(int $countryId): array {
         return $this->db
             ->table('oc_zone')
-            ->select([
-                'zone_id',
-                'name'
-            ])
+            ->select(['zone_id','name'])
             ->where('country_id', $countryId)
             ->where('status', 1)
             ->orderBy('name', 'ASC')
@@ -792,27 +762,18 @@ class OrderModel extends Model {
 
     /* ORDER STATUS */
 
-    public function getOrderStatuses(): array
-    {
+    public function getOrderStatuses(): array {
         return $this->db
             ->table('oc_order_status')
-            ->select([
-                'order_status_id',
-                'name'
-            ])
+            ->select(['order_status_id','name'])
             ->where('language_id', 1)
             ->orderBy('name', 'ASC')
             ->get()
             ->getResultArray();
     }
 
-
     /* UPDATE ORDER STATUS */
-    public function updateOrderStatus(
-        int $orderId,
-        int $statusId,
-        string $comment = ''
-    ): bool {
+    public function updateOrderStatus(int $orderId,int $statusId,string $comment = ''): bool {
         $this->db->transStart();
 
         $now = date('Y-m-d H:i:s');
@@ -897,7 +858,6 @@ class OrderModel extends Model {
             ->getResultArray();
 
         foreach ($products as &$product) {
-
             $product['files'] =
                 $this->getCrmOrderProductFiles(
                     $orderId,
@@ -933,6 +893,7 @@ class OrderModel extends Model {
 
         return $builder->get()->getResultArray(); 
     }
+
     public function getOrderPaidAmount(int $orderId): float {
         $builder = $this->db->table('oc_crm_order_payment');
 
@@ -943,6 +904,7 @@ class OrderModel extends Model {
 
         return (float) ($result['amount'] ?? 0);
     }
+
     public function getCrmOrderProductFiles( int $orderId, int $orderProductId ): array {
         return $this->db
             ->table('oc_crm_order_product_file f')
@@ -960,20 +922,10 @@ class OrderModel extends Model {
                 'u.firstname',
                 'u.lastname'
             ])
-            ->join(
-                'oc_user u',
-                'u.user_id = f.uploaded_by',
-                'left'
-            )
+            ->join('oc_user u','u.user_id = f.uploaded_by','left')
             ->where('f.order_id', $orderId)
-            ->where(
-                'f.order_product_id',
-                $orderProductId
-            )
-            ->orderBy(
-                'f.crm_order_product_file_id',
-                'DESC'
-            )
+            ->where('f.order_product_id',$orderProductId)
+            ->orderBy('f.crm_order_product_file_id','DESC')
             ->get()
             ->getResultArray();
     }
@@ -985,15 +937,8 @@ class OrderModel extends Model {
             ->get()
             ->getRowArray();
     }
-    public function updateCrmOrderProduct(
-        int $orderId,
-        int $orderProductId,
-        string $name,
-        int $quantity,
-        float $price,
-        ?string $vendor,
-        ?float $vendorPrice
-    ): bool {
+
+    public function updateCrmOrderProduct( int $orderId, int $orderProductId, string $name, int $quantity, float $price, ?string $vendor, ?float $vendorPrice ): bool {
     
         $orderProduct = $this->db
             ->table('oc_order_product')
@@ -1055,10 +1000,7 @@ class OrderModel extends Model {
                 ]);
         }
     
-        /*
-         * Recalculate complete order total
-         * from all products.
-         */
+        /* Recalculate complete order total from all products. */
         $orderTotalRow = $this->db
             ->table('oc_order_product')
             ->selectSum('total', 'order_total')
@@ -1075,7 +1017,13 @@ class OrderModel extends Model {
             ->update([
                 'total' => $orderTotal
             ]);
-    
+        /* Update oc_order_subtotal */
+        $this->db
+            ->table('oc_order_total')
+            ->where('order_id', $orderId)
+            ->where('code', 'sub_total')
+            ->update(['value' => $orderTotal,
+        ]);
         /* Update oc_order_total */
         $this->db
             ->table('oc_order_total')
@@ -1083,10 +1031,6 @@ class OrderModel extends Model {
             ->where('code', 'total')
             ->update([
                 'value' => $orderTotal,
-                'text'  => $this->currency->format(
-                    $orderTotal,
-                    $this->config->get('config_currency')
-                )
             ]);
     
         $this->db->transComplete();
@@ -1099,14 +1043,9 @@ class OrderModel extends Model {
             ->table('oc_crm_order')
             ->where('order_id', $orderId)
             ->update([
-                'order_source' =>
-                    $orderSource,
-    
-                'dispatch_deadline' =>
-                    $dispatchDeadline,
-    
-                'delivery_date' =>
-                    $deliveryDate
+                'order_source' => $orderSource,
+                'dispatch_deadline' => $dispatchDeadline,
+                'delivery_date' => $deliveryDate
             ]);
     }
     public function updateCustomerDetails( int $orderId, string $firstname, string $lastname, string $email, string $telephone ): bool {
@@ -1159,5 +1098,127 @@ class OrderModel extends Model {
             ->where('order_id', $orderId)
             ->get()
             ->getRow('total');
+    }
+    public function addProductToOrder(
+        int $orderId,
+        int $productId,
+        string $name,
+        string $model,
+        int $quantity,
+        float $price,
+        ?string $vendor,
+        ?float $vendorPrice
+    ): array|false {
+        if (!$this->orderExists($orderId)) {
+            return false;
+        }
+    
+        if ($productId > 0) {
+            $catalogProduct = $this->db
+                ->table('oc_product')
+                ->select('product_id')
+                ->where('product_id', $productId)
+                ->where('status', 1)
+                ->get()
+                ->getRowArray();
+    
+            if (!$catalogProduct) {
+                return false;
+            }
+        }
+    
+        $lineTotal = round($quantity * $price, 2);
+        $now = date('Y-m-d H:i:s');
+    
+        $this->db->transBegin();
+    
+        try {
+            // Insert the order-specific product.
+            $this->db->table('oc_order_product')->insert([
+                'order_id'   => $orderId,
+                'product_id' => $productId,
+                'name'       => $name,
+                'model'      => $model,
+                'quantity'   => $quantity,
+                'price'      => $price,
+                'total'      => $lineTotal,
+                'tax'        => 0,
+                'reward'     => 0
+            ]);
+    
+            $orderProductId = (int) $this->db->insertID();
+    
+            if ($orderProductId <= 0) {
+                throw new Exception('Failed to insert order product.');
+            }
+    
+            // Save CRM vendor details for this order product.
+            $this->db->table('oc_crm_order_product')->insert([
+                'order_id'         => $orderId,
+                'order_product_id' => $orderProductId,
+                'vendor'           => $vendor ?: null,
+                'vendor_price'     => $vendorPrice
+            ]);
+    
+            // Recalculate from all product line totals, as in your current
+            // updateCrmOrderProduct() implementation.
+            $totalRow = $this->db
+                ->table('oc_order_product')
+                ->selectSum('total', 'order_total')
+                ->where('order_id', $orderId)
+                ->get()
+                ->getRowArray();
+    
+            $orderTotal = round(
+                (float) ($totalRow['order_total'] ?? 0),
+                2
+            );
+    
+            $this->db->table('oc_order')
+                ->where('order_id', $orderId)
+                ->update([
+                    'total'         => $orderTotal,
+                    'date_modified' => $now
+                ]);
+    
+            // Update numeric values only; don't overwrite OpenCart text fields.
+            $this->db->table('oc_order_total')
+                ->where('order_id', $orderId)
+                ->where('code', 'sub_total')
+                ->update(['value' => $orderTotal]);
+    
+            $this->db->table('oc_order_total')
+                ->where('order_id', $orderId)
+                ->where('code', 'total')
+                ->update(['value' => $orderTotal]);
+    
+            if ($this->db->transStatus() === false) {
+                throw new Exception('Failed to update order totals.');
+            }
+    
+            $this->db->transCommit();
+    
+            return [
+                'order_product_id' => $orderProductId,
+                'product_id'       => $productId,
+                'name'             => $name,
+                'model'            => $model,
+                'quantity'         => $quantity,
+                'price'            => $price,
+                'line_total'       => $lineTotal,
+                'vendor'           => $vendor ?? '',
+                'vendor_price'     => $vendorPrice,
+                'order_total'      => $orderTotal
+            ];
+        } catch (Exception $e) {
+            $this->db->transRollback();
+    
+            log_message(
+                'error',
+                'CRM add order product failed: ' . $e->getMessage()
+            );
+    
+            return false;
+        }
     }
 }

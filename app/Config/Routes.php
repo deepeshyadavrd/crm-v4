@@ -42,6 +42,7 @@ $routes->post('orders/create', 'Orders::create');
 $routes->post('orders/update/(:num)', 'Orders::update/$1');
 $routes->post('orders/product/update', 'OrderController::productUpdate');
 $routes->get('orders/file/download/(:num)', 'Orders::fileDownload/$1');
+$routes->post('orders/products/add/(:num)', 'Orders::addProduct/$1');
 
 /* product */
 $routes->get('products/search', 'Product::search');

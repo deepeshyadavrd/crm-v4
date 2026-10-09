@@ -243,11 +243,7 @@ class Orders extends WSController
             }
 
             return redirect()
-                ->to(
-                    site_url(
-                        'orders/view/' . $orderId
-                    )
-                )
+                ->to(site_url('orders/view/' . $orderId))
                 ->with(
                     'success',
                     'Order status updated successfully.'
@@ -456,9 +452,7 @@ class Orders extends WSController
                 /* Vendor is optional. */
                 $vendor = trim((string) ($product['vendor'] ?? ''));
 
-                /* Vendor price is optional.
-                 * NULL means vendor pricing has not been
-                 * decided yet. */
+                /* Vendor price is optional. NULL means vendor pricing has not been decided yet. */
                 $vendorPrice = null;
 
                 if (isset($product['vendor_price']) && $product['vendor_price'] !== '' && is_numeric($product['vendor_price'])) {
@@ -739,6 +733,8 @@ class Orders extends WSController
                 return $this->insertPayment($orderId);
             case 'product':
                 return $this->updateProductSection($orderId);
+            case 'product-add':
+                return $this->addProduct($orderId);
 
             case 'payment-address':
                 return $this->updatePaymentAddressSection($orderId);
@@ -953,7 +949,6 @@ class Orders extends WSController
             ? null
             : (float) $vendorPriceInput;
 
-
         if ($orderProductId <= 0) {
 
             return $this->response
@@ -1004,17 +999,8 @@ class Orders extends WSController
                 ]);
         }
 
-
-        $updated = $this->orderModel->updateCrmOrderProduct(
-            $orderId,
-            $orderProductId,
-            $name,
-            $quantity,
-            $price,
-            $vendor,
-            $vendorPrice
+        $updated = $this->orderModel->updateCrmOrderProduct($orderId, $orderProductId, $name, $quantity, $price, $vendor, $vendorPrice
         );
-
 
         if (!$updated) {
 
@@ -1026,9 +1012,7 @@ class Orders extends WSController
                 ]);
         }
 
-
         $total = $quantity * $price;
-
 
         return $this->response
             ->setJSON([
@@ -1043,4 +1027,103 @@ class Orders extends WSController
                 'vendor_price' => $vendorPrice
             ]);
     }
+    public function addProduct(int $orderId = 0)
+{
+    if (!$this->request->isAJAX()) {
+        return $this->response->setStatusCode(400)->setJSON([
+            'success' => false,
+            'message' => 'AJAX request required.'
+        ]);
+    }
+
+    if (!$this->canEdit) {
+        return $this->response->setStatusCode(403)->setJSON([
+            'success' => false,
+            'message' => 'You do not have permission to edit orders.'
+        ]);
+    }
+
+    if (
+        $orderId <= 0 ||
+        !$this->orderModel->canAccessOrder(
+            $orderId,
+            $this->scope,
+            $this->userId
+        )
+    ) {
+        return $this->response->setStatusCode(403)->setJSON([
+            'success' => false,
+            'message' => 'Invalid order or access denied.'
+        ]);
+    }
+
+    $productId = (int) $this->request->getPost('product_id');
+    $name      = trim((string) $this->request->getPost('name'));
+    $model     = trim((string) $this->request->getPost('model'));
+    $quantity  = filter_var(
+        $this->request->getPost('quantity'),
+        FILTER_VALIDATE_INT
+    );
+
+    $priceInput = $this->request->getPost('price');
+    $vendorPriceInput = $this->request->getPost('vendor_price');
+
+    if (
+        $productId < 0 ||
+        $name === '' ||
+        $quantity === false ||
+        $quantity < 1 ||
+        $priceInput === null ||
+        $priceInput === '' ||
+        !is_numeric($priceInput) ||
+        (float) $priceInput < 0
+    ) {
+        return $this->response->setStatusCode(400)->setJSON([
+            'success' => false,
+            'message' => 'Enter a valid product name, quantity and price.'
+        ]);
+    }
+
+    $price = (float) $priceInput;
+
+    $vendor = trim((string) $this->request->getPost('vendor'));
+    $vendor = $vendor !== '' ? $vendor : null;
+
+    $vendorPrice = null;
+
+    if ($vendorPriceInput !== null && $vendorPriceInput !== '') {
+        if (!is_numeric($vendorPriceInput) || (float) $vendorPriceInput < 0) {
+            return $this->response->setStatusCode(400)->setJSON([
+                'success' => false,
+                'message' => 'Vendor price cannot be negative.'
+            ]);
+        }
+
+        $vendorPrice = (float) $vendorPriceInput;
+    }
+
+    $product = $this->orderModel->addProductToOrder(
+        $orderId,
+        $productId,
+        $name,
+        $model,
+        (int) $quantity,
+        $price,
+        $vendor,
+        $vendorPrice
+    );
+
+    if ($product === false) {
+        return $this->response->setStatusCode(500)->setJSON([
+            'success' => false,
+            'message' => 'Unable to add product to this order.'
+        ]);
+    }
+
+    return $this->response->setJSON([
+        'success' => true,
+        'message' => 'Product added successfully.',
+        'product' => $product
+    ]);
+}
 }

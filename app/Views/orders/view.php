@@ -231,9 +231,20 @@
 
     <!-- Products -->
     <div class="card mb-3">
-        <div class="card-header">
-            <strong>Products</strong>
-        </div>
+        <div class="card-header d-flex justify-content-between align-items-center">
+    <strong>Products</strong>
+
+    <?php if ($canEdit): ?>
+        <button
+            type="button"
+            class="btn btn-sm btn-primary"
+            data-bs-toggle="modal"
+            data-bs-target="#editSectionModal"
+            data-section="product-add">
+            + Add Product
+        </button>
+    <?php endif; ?>
+</div>
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-bordered mb-0 align-middle" id="productsTable">
@@ -328,7 +339,6 @@
         </div>
     </div>
 
-
     <!-- Addresses -->
     <div class="row g-3 mb-3">
         <!-- Payment Address -->
@@ -361,51 +371,35 @@
                 <?= esc(
                     $order['payment_city'] ?? ''
                 ) ?>
-
                 <?php if (!empty($order['payment_postcode'])): ?>
-
                     -
                     <?= esc(
                         $order['payment_postcode']
                     ) ?>
 
                 <?php endif; ?>
-
             </div>
-
             <div>
-                <?= esc(
-                    $order['payment_zone'] ?? ''
-                ) ?>
-
+                <?= esc($order['payment_zone'] ?? '') ?>
                 <?php if (!empty($order['payment_country'])): ?>
 
                     , <?= esc(
                         $order['payment_country']
                     ) ?>
-
                 <?php endif; ?>
-
             </div>
-
                 </div>
-
             </div>
-
         </div>
 
 
         <!-- Shipping Address -->
         <div class="col-md-6">
-
             <div class="card h-100">
-
                 <div class="card-header">
                     <strong>Shipping Address</strong>
                 </div>
-
                 <div class="card-body">
-
                 <div>
                 <?= esc(
                     $order['shipping_firstname'] ?? ''
@@ -416,98 +410,67 @@
             </div>
 
             <?php if (!empty($order['shipping_company'])): ?>
-
                 <div>
                     <?= esc(
                         $order['shipping_company']
                     ) ?>
                 </div>
-
             <?php endif; ?>
-
             <div>
                 <?= esc(
                     $order['shipping_address_1'] ?? ''
                 ) ?>
             </div>
-
             <?php if (!empty($order['shipping_address_2'])): ?>
-
                 <div>
                     <?= esc(
                         $order['shipping_address_2']
                     ) ?>
                 </div>
-
             <?php endif; ?>
-
             <div>
                 <?= esc(
                     $order['shipping_city'] ?? ''
                 ) ?>
-
                 <?php if (!empty($order['shipping_postcode'])): ?>
-
                     -
                     <?= esc(
                         $order['shipping_postcode']
                     ) ?>
-
                 <?php endif; ?>
-
             </div>
-
             <div>
                 <?= esc(
                     $order['shipping_zone'] ?? ''
                 ) ?>
-
                 <?php if (!empty($order['shipping_country'])): ?>
-
                     , <?= esc(
                         $order['shipping_country']
                     ) ?>
-
                 <?php endif; ?>
-
             </div>
-
                 </div>
-
             </div>
-
         </div>
-
     </div>
-
 
     <!-- Order Totals -->
     <div class="card mb-3">
-
         <div class="card-header">
             <strong>Order Totals</strong>
         </div>
-
         <div class="card-body p-0">
-
             <div class="table-responsive">
-
                 <table class="table table-sm table-bordered mb-0">
-
                     <tbody>
-
                         <?php foreach ($totals as $total): ?>
-
                             <tr>
-
                                 <td class="text-end">
                                     <?= esc(
                                         $total['title']
                                     ) ?>
                                 </td>
-
                                 <td class="text-end">
-
                                     <?= esc(
                                         $order['currency_code'] ?? ''
                                     ) ?>
@@ -516,259 +479,72 @@
                                         (float) $total['value'],
                                         2
                                     ) ?>
-
                                 </td>
-
                             </tr>
-
                         <?php endforeach; ?>
-
                     </tbody>
-
                 </table>
-
             </div>
-
         </div>
-
     </div>
-
 
     <!-- Order History -->
     <div class="card mb-4">
-
         <div class="card-header">
             <strong>Order History</strong>
         </div>
-
         <div class="card-body p-0">
-
             <?php if ($history): ?>
-
                 <div class="table-responsive">
-
                     <table class="table table-sm table-bordered mb-0">
-
                         <thead>
-
                             <tr>
                                 <th>Date</th>
                                 <th>Status</th>
                                 <th>Comment</th>
                                 <th>Added By</th>
                             </tr>
-
                         </thead>
-
-
                         <tbody>
-
                             <?php foreach ($history as $item): ?>
-
                                 <tr>
-
                                     <td>
                                         <?= esc(
                                             $item['date_added']
                                         ) ?>
                                     </td>
-
                                     <td>
                                         <?= esc(
                                             $item['status']
                                             ?? '-'
                                         ) ?>
                                     </td>
-
                                     <td>
                                         <?= esc(
                                             $item['comment']
                                             ?? '-'
                                         ) ?>
                                     </td>
-
                                     <td>
                                         <?= esc(
                                             $item['username']
                                             ?? '-'
                                         ) ?>
                                     </td>
-
                                 </tr>
-
                             <?php endforeach; ?>
-
                         </tbody>
-
                     </table>
-
                 </div>
-
             <?php else: ?>
-
                 <div class="p-3 text-muted">
                     No order history found.
                 </div>
-
             <?php endif; ?>
-
         </div>
-
     </div>
-
 </div>
 
-
-<!-- Add Payment Modal -->
-<!-- <?php if ($canEdit): ?>
-
-    <div
-        class="modal fade"
-        id="addPaymentModal"
-        tabindex="-1"
-        aria-hidden="true"
-    >
-
-        <div class="modal-dialog">
-
-            <div class="modal-content">
-
-                <form
-                    method="post"
-                    action="<?= site_url(
-                        'orders/payment/add/' .
-                        (int) $order['order_id']
-                    ) ?>"
-                >
-
-                    <?= csrf_field() ?>
-
-
-                    <div class="modal-header">
-
-                        <h5 class="modal-title">
-                            Add Payment
-                        </h5>
-
-                        <button
-                            type="button"
-                            class="btn-close"
-                            data-bs-dismiss="modal"
-                        ></button>
-
-                    </div>
-
-
-                    <div class="modal-body">
-
-                        <div class="mb-3">
-
-                            <label class="form-label">
-                                Amount
-                            </label>
-
-                            <input
-                                type="number"
-                                name="amount"
-                                class="form-control"
-                                min="0.01"
-                                step="0.01"
-                                required
-                            >
-
-                        </div>
-
-
-                        <div class="mb-3">
-
-                            <label class="form-label">
-                                Payment Method
-                            </label>
-
-                            <input
-                                type="text"
-                                name="payment_method"
-                                class="form-control"
-                            >
-
-                        </div>
-
-
-                        <div class="mb-3">
-
-                            <label class="form-label">
-                                Reference
-                            </label>
-
-                            <input
-                                type="text"
-                                name="payment_reference"
-                                class="form-control"
-                            >
-
-                        </div>
-
-
-                        <div class="mb-3">
-
-                            <label class="form-label">
-                                Payment Date
-                            </label>
-
-                            <input
-                                type="datetime-local"
-                                name="payment_date"
-                                class="form-control"
-                            >
-
-                        </div>
-
-
-                        <div class="mb-0">
-
-                            <label class="form-label">
-                                Comment
-                            </label>
-
-                            <textarea
-                                name="comment"
-                                class="form-control"
-                                rows="3"
-                            ></textarea>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="modal-footer">
-
-                        <button
-                            type="button"
-                            class="btn btn-secondary"
-                            data-bs-dismiss="modal"
-                        >
-                            Cancel
-                        </button>
-
-                        <button
-                            type="submit"
-                            class="btn btn-primary"
-                        >
-                            Save Payment
-                        </button>
-
-                    </div>
-
-                </form>
-
-            </div>
-
-        </div>
-
-    </div>
-
-<?php endif; ?> -->
 <?php if ($canEdit): ?>
 
 <div class="modal fade" id="editSectionModal" tabindex="-1" aria-hidden="true">
@@ -818,7 +594,6 @@ function showSuccessToast( message ) {
         return;
     }
     if (toastMessage) {
-
         toastMessage.textContent = message;
     }
 
@@ -873,7 +648,6 @@ document.querySelectorAll( '.product-update-form' ).forEach(function(form) {
 
                     return;
                 }
-
 
                 /* Update only this product's displayed values. */
                 vendorInput.value = data.vendor;
@@ -1016,11 +790,8 @@ const editSectionSave = document.getElementById( 'editSectionSave' );
             `;
         }
         if (section === 'product') {
-
             const orderProductId = button.dataset.orderProductId;
-
             editSectionTitle.textContent = 'Edit Product';
-
             editSectionBody.innerHTML = `
                 <input type="hidden" name="order_product_id" id="editOrderProductId">
 
@@ -1067,6 +838,56 @@ const editSectionSave = document.getElementById( 'editSectionSave' );
             }
 
             document.getElementById('editProductVendorPrice').value = vendorPrice;
+        }
+        if (section === 'product-add') {
+            const orderProductId = button.dataset.orderProductId;
+            editSectionTitle.textContent = 'Edit Product';
+            editSectionBody.innerHTML = `
+                <input type="hidden" name="order_product_id" id="editOrderProductId">
+
+                <div class="mb-3">
+                    <label class="form-label">Product Name</label>
+                    <input type="text" name="name" id="editProductName" class="form-control" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Quantity</label>
+                    <input type="number" name="quantity" id="editProductQuantity" class="form-control" min="1" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Price</label>
+                    <input type="number" name="price" id="editProductPrice" class="form-control" min="0" step="0.01" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Vendor</label>
+                    <input type="text" name="vendor" id="editProductVendor" class="form-control">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Vendor Price</label>
+                    <input type="number" name="vendor_price" id="editProductVendorPrice" class="form-control" min="0" step="0.01">
+                </div>
+            `;
+
+            // document.getElementById('editOrderProductId').value = orderProductId;
+            // document.getElementById('editProductName').value = document.getElementById('product-name-' + orderProductId).textContent.trim();
+            // document.getElementById('editProductQuantity').value = document.getElementById('product-quantity-' + orderProductId).textContent.trim();
+
+            // let price = document.getElementById('product-price-' + orderProductId).textContent.trim();
+
+            // price = price.replace(/[^\d.-]/g, '');
+            // document.getElementById('editProductPrice').value = price;
+            // document.getElementById('editProductVendor').value = document.getElementById('product-vendor-' + orderProductId).textContent.trim();
+            // let vendorPrice = document.getElementById('product-vendor-price-' + orderProductId).textContent.trim();
+            // vendorPrice = vendorPrice.replace(/[^\d.-]/g, '');
+
+            // if (vendorPrice === '-') {
+            //     vendorPrice = '';
+            // }
+
+            // document.getElementById('editProductVendorPrice').value = vendorPrice;
         }
     });
 
@@ -1168,29 +989,51 @@ const editSectionSave = document.getElementById( 'editSectionSave' );
             const modalElement = document.getElementById( 'editSectionModal' );
 
             if (modalElement) {
-
                 const closeButton = modalElement.querySelector( '[data-bs-dismiss="modal"]' );
-
                 if (closeButton) {
                     closeButton.click();
                 }
             }
-
         })
         .catch(function(error) {
             console.error(error);
             editSectionMessage.className = 'px-3 text-danger';
             editSectionMessage.textContent = 'Unable to update details.';
-
         })
         .finally(function() {
             editSectionSave.disabled = false;
             editSectionSave.textContent = 'Save';
         });
+    }
+    // const productNameInput = document.getElementById('editProductName');
 
+let productSearchTimer;
+// console.log(productNameInput);
+editSectionBody.addEventListener('input', function () {
+    if (event.target && event.target.id === 'editProductName') {
+    const term = this.value.trim();
+
+    // A changed name must not retain a previously selected catalog ID.
+    document.getElementById('add-product-id').value = '';
+
+    clearTimeout(productSearchTimer);
+
+    if (term.length < 2) {
+        document.getElementById('product-search-results').innerHTML = '';
+        return;
     }
 
-
+    productSearchTimer = setTimeout(() => {
+        fetch('<?= base_url('leads/searchProduct'); ?>?term=' + encodeURIComponent(term))
+            .then(response => response.json())
+            .then(data => {
+                // Render the returned results using your existing
+                // leads product-search result format and selection logic.
+            })
+            .catch(error => console.error('Product search failed:', error));
+    }, 250);
+}
+});
 //escape html
 function escapeHtml( value ) {
     return value
