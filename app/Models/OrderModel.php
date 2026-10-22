@@ -1221,4 +1221,115 @@ class OrderModel extends Model {
             return false;
         }
     }
+
+    public function removeProductFromOrder(int $orderId, int $orderProductId): array|false {
+        $orderProduct = $this->db
+            ->table('oc_order_product')
+            ->select('order_product_id')
+            ->where('order_id', $orderId)
+            ->where('order_product_id', $orderProductId)
+            ->get()
+            ->getRowArray();
+
+        if (!$orderProduct) {
+            return false;
+        }
+
+        $files = $this->getCrmOrderProductFiles( $orderId, $orderProductId );
+
+        $this->db->transBegin();
+
+        try {
+            /* Delete product file records. */
+            $this->db
+                ->table('oc_crm_order_product_file')
+                ->where('order_id', $orderId)
+                ->where('order_product_id', $orderProductId)
+                ->delete();
+
+            /* Delete CRM vendor and vendor price details. */
+            $this->db
+                ->table('oc_crm_order_product')
+                ->where('order_id', $orderId)
+                ->where('order_product_id', $orderProductId)
+                ->delete();
+
+            /* Delete OpenCart product options, if any. */
+            $this->db
+                ->table('oc_order_option')
+                ->where('order_id', $orderId)
+                ->where('order_product_id', $orderProductId)
+                ->delete();
+
+            /* Delete the product from the order. */
+            $this->db
+                ->table('oc_order_product')
+                ->where('order_id', $orderId)
+                ->where('order_product_id', $orderProductId)
+                ->delete();
+
+            /* Recalculate the order total. */
+            $totalRow = $this->db
+                ->table('oc_order_product')
+                ->selectSum('total', 'order_total')
+                ->where('order_id', $orderId)
+                ->get()
+                ->getRowArray();
+
+            $orderTotal = round(
+                (float) ($totalRow['order_total'] ?? 0),
+                2
+            );
+
+            /* Update OpenCart order total. */
+            $this->db
+                ->table('oc_order')
+                ->where('order_id', $orderId)
+                ->update([
+                    'total' => $orderTotal,
+                    'date_modified' => date('Y-m-d H:i:s')
+                ]);
+
+            /* Update subtotal. */
+            $this->db
+                ->table('oc_order_total')
+                ->where('order_id', $orderId)
+                ->where('code', 'sub_total')
+                ->update([
+                    'value' => $orderTotal
+                ]);
+
+            /* Update final order total. */
+            $this->db
+                ->table('oc_order_total')
+                ->where('order_id', $orderId)
+                ->where('code', 'total')
+                ->update([
+                    'value' => $orderTotal
+                ]);
+
+            if ($this->db->transStatus() === false) {
+                throw new \RuntimeException(
+                    'Failed to remove the order product.'
+                );
+            }
+
+            $this->db->transCommit();
+
+            return [
+                'files' => $files,
+                'order_total' => $orderTotal
+            ];
+
+        } catch (\Throwable $e) {
+            $this->db->transRollback();
+
+            log_message(
+                'error',
+                'Failed to remove order product: ' . $e->getMessage()
+            );
+
+            return false;
+        }
+    }
 }

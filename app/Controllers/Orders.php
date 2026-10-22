@@ -742,6 +742,9 @@ class Orders extends WSController
             case 'shipping-address':
                 return $this->updateShippingAddressSection($orderId);
 
+            case 'product-delete':
+                return $this->removeProductSection($orderId);
+
             default:
 
                 return $this->response
@@ -1013,7 +1016,9 @@ class Orders extends WSController
         }
 
         $total = $quantity * $price;
-
+        $orderTotal = $this->orderModel->getOrderTotal($orderId);
+        $paymentReceived = $this->orderModel->getOrderPaidAmount($orderId);
+        $paymentDue = max(0, $orderTotal - $paymentReceived);
         return $this->response
             ->setJSON([
                 'success' => true,
@@ -1024,106 +1029,181 @@ class Orders extends WSController
                 'price' => $price,
                 'total' => $total,
                 'vendor' => $vendor,
-                'vendor_price' => $vendorPrice
+                'vendor_price' => $vendorPrice,
+                'order_total' => $orderTotal,
+                'subtotal' => $orderTotal,
+                'payment_received' => $paymentReceived,
+                'payment_due' => $paymentDue
             ]);
     }
-    public function addProduct(int $orderId = 0)
-{
-    if (!$this->request->isAJAX()) {
-        return $this->response->setStatusCode(400)->setJSON([
-            'success' => false,
-            'message' => 'AJAX request required.'
-        ]);
-    }
-
-    if (!$this->canEdit) {
-        return $this->response->setStatusCode(403)->setJSON([
-            'success' => false,
-            'message' => 'You do not have permission to edit orders.'
-        ]);
-    }
-
-    if (
-        $orderId <= 0 ||
-        !$this->orderModel->canAccessOrder(
-            $orderId,
-            $this->scope,
-            $this->userId
-        )
-    ) {
-        return $this->response->setStatusCode(403)->setJSON([
-            'success' => false,
-            'message' => 'Invalid order or access denied.'
-        ]);
-    }
-
-    $productId = (int) $this->request->getPost('product_id');
-    $name      = trim((string) $this->request->getPost('name'));
-    $model     = trim((string) $this->request->getPost('model'));
-    $quantity  = filter_var(
-        $this->request->getPost('quantity'),
-        FILTER_VALIDATE_INT
-    );
-
-    $priceInput = $this->request->getPost('price');
-    $vendorPriceInput = $this->request->getPost('vendor_price');
-
-    if (
-        $productId < 0 ||
-        $name === '' ||
-        $quantity === false ||
-        $quantity < 1 ||
-        $priceInput === null ||
-        $priceInput === '' ||
-        !is_numeric($priceInput) ||
-        (float) $priceInput < 0
-    ) {
-        return $this->response->setStatusCode(400)->setJSON([
-            'success' => false,
-            'message' => 'Enter a valid product name, quantity and price.'
-        ]);
-    }
-
-    $price = (float) $priceInput;
-
-    $vendor = trim((string) $this->request->getPost('vendor'));
-    $vendor = $vendor !== '' ? $vendor : null;
-
-    $vendorPrice = null;
-
-    if ($vendorPriceInput !== null && $vendorPriceInput !== '') {
-        if (!is_numeric($vendorPriceInput) || (float) $vendorPriceInput < 0) {
+    public function addProduct(int $orderId = 0) {
+        if (!$this->request->isAJAX()) {
             return $this->response->setStatusCode(400)->setJSON([
                 'success' => false,
-                'message' => 'Vendor price cannot be negative.'
+                'message' => 'AJAX request required.'
             ]);
         }
 
-        $vendorPrice = (float) $vendorPriceInput;
-    }
+        if (!$this->canEdit) {
+            return $this->response->setStatusCode(403)->setJSON([
+                'success' => false,
+                'message' => 'You do not have permission to edit orders.'
+            ]);
+        }
 
-    $product = $this->orderModel->addProductToOrder(
-        $orderId,
-        $productId,
-        $name,
-        $model,
-        (int) $quantity,
-        $price,
-        $vendor,
-        $vendorPrice
-    );
+        if ($orderId <= 0 || !$this->orderModel->canAccessOrder($orderId, $this->scope, $this->userId)) {
+            return $this->response->setStatusCode(403)->setJSON([
+                'success' => false,
+                'message' => 'Invalid order or access denied.'
+            ]);
+        }
 
-    if ($product === false) {
-        return $this->response->setStatusCode(500)->setJSON([
-            'success' => false,
-            'message' => 'Unable to add product to this order.'
+        $productId = (int) $this->request->getPost('product_id');
+        $name      = trim((string) $this->request->getPost('name'));
+        $model     = trim((string) $this->request->getPost('model'));
+        $quantity  = filter_var(
+            $this->request->getPost('quantity'),
+            FILTER_VALIDATE_INT
+        );
+
+        $priceInput = $this->request->getPost('price');
+        $vendorPriceInput = $this->request->getPost('vendor_price');
+
+        if (
+            $productId < 0 ||
+            $name === '' ||
+            $quantity === false ||
+            $quantity < 1 ||
+            $priceInput === null ||
+            $priceInput === '' ||
+            !is_numeric($priceInput) ||
+            (float) $priceInput < 0
+        ) {
+            return $this->response->setStatusCode(400)->setJSON([
+                'success' => false,
+                'message' => 'Enter a valid product name, quantity and price.'
+            ]);
+        }
+
+        $price = (float) $priceInput;
+
+        $vendor = trim((string) $this->request->getPost('vendor'));
+        $vendor = $vendor !== '' ? $vendor : null;
+
+        $vendorPrice = null;
+
+        if ($vendorPriceInput !== null && $vendorPriceInput !== '') {
+            if (!is_numeric($vendorPriceInput) || (float) $vendorPriceInput < 0) {
+                return $this->response->setStatusCode(400)->setJSON([
+                    'success' => false,
+                    'message' => 'Vendor price cannot be negative.'
+                ]);
+            }
+
+            $vendorPrice = (float) $vendorPriceInput;
+        }
+
+        $product = $this->orderModel->addProductToOrder(
+            $orderId,
+            $productId,
+            $name,
+            $model,
+            (int) $quantity,
+            $price,
+            $vendor,
+            $vendorPrice
+        );
+
+        if ($product === false) {
+            return $this->response->setStatusCode(500)->setJSON([
+                'success' => false,
+                'message' => 'Unable to add product to this order.'
+            ]);
+        }
+
+        $orderTotal = $this->orderModel->getOrderTotal($orderId);
+        $paymentReceived = $this->orderModel->getOrderPaidAmount($orderId);
+        $paymentDue = max(0, $orderTotal - $paymentReceived);
+        return $this->response->setJSON([
+            'success' => true,
+            'message' => 'Product added successfully.',
+            'product' => $product,
+            'order_total' => $orderTotal,
+            'subtotal' => $orderTotal,
+            'payment_received' => $paymentReceived,
+            'payment_due' => $paymentDue
         ]);
     }
 
-    return $this->response->setJSON([
-        'success' => true,
-        'message' => 'Product added successfully.',
-        'product' => $product
-    ]);
-}
+    private function removeProductSection(int $orderId){
+        $orderProductId = (int) $this->request->getPost( 'order_product_id' );
+
+        if (!$this->request->isAJAX()) {
+            return $this->response
+                ->setStatusCode(400)
+                ->setJSON([
+                    'success' => false,
+                    'message' => 'AJAX request required.'
+                ]);
+        }
+
+        if (!$this->canEdit) {
+            return $this->response
+                ->setStatusCode(403)
+                ->setJSON([
+                    'success' => false,
+                    'message' => 'You do not have permission to edit orders.'
+                ]);
+        }
+
+        if ( $orderProductId <= 0 || !$this->orderModel->canAccessOrder( $orderId, $this->scope, $this->userId ) ) {
+            return $this->response
+                ->setStatusCode(400)
+                ->setJSON([
+                    'success' => false,
+                    'message' => 'Invalid order or product.'
+                ]);
+        }
+
+        $result = $this->orderModel->removeProductFromOrder( $orderId, $orderProductId );
+
+        if ($result === false) {
+            return $this->response
+                ->setStatusCode(500)
+                ->setJSON([
+                    'success' => false,
+                    'message' => 'Unable to remove the product.'
+                ]);
+        }
+
+        /* Delete the actual uploaded files after the database succeeds. */
+        $productDirectory = realpath( WRITEPATH . 'uploads/order_designs/' . $orderId . '/' . $orderProductId );
+
+        foreach ($result['files'] as $file) {
+            $filePath = realpath( WRITEPATH . ltrim($file['file_path'], '/\\') );
+
+            if ( $productDirectory !== false && $filePath !== false && str_starts_with( $filePath, $productDirectory . DIRECTORY_SEPARATOR ) && is_file($filePath) ) {
+                unlink($filePath);
+            }
+        }
+
+        /* Remove the now-empty product directory, if possible. */
+        if ( $productDirectory !== false && is_dir($productDirectory) ) {
+            @rmdir($productDirectory);
+        }
+
+        $orderTotal = (float) $result['order_total'];
+        $paymentReceived = $this->orderModel->getOrderPaidAmount( $orderId );
+
+        return $this->response->setJSON([
+            'success' => true,
+            'section' => 'product-delete',
+            'order_product_id' => $orderProductId,
+            'order_total' => $orderTotal,
+            'subtotal' => $orderTotal,
+            'payment_received' => $paymentReceived,
+            'payment_due' => max(0, $orderTotal - $paymentReceived),
+            'message' => 'Product removed successfully.'
+        ]);
+    }
 }

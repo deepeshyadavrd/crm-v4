@@ -156,7 +156,7 @@
                         <div class="text-muted small">
                             Order Total
                         </div>
-                        <div class="fs-5 fw-semibold">
+                        <div class="fs-5 fw-semibold" id="orderGrandTotal">
                             <?= esc($order['currency_code'] ?? '') ?>
                             <?= number_format((float) $order['total'],2) ?>
                         </div>
@@ -310,6 +310,12 @@
                                 </td>
                                 <td>
                                     <button type="button"class="btn btn-sm btn-outline-primary edit-section" data-section="product"  data-order-product-id="<?= $orderProductId ?>" data-bs-toggle="modal" data-bs-target="#editSectionModal">Edit</button>
+                                    <button
+        type="button"
+        class="btn btn-sm btn-outline-danger remove-product"
+        data-order-product-id="<?= $orderProductId ?>">
+        Remove
+    </button>
                                 </td>
                                 <td>
                                     <?php $files = $crmProduct['files'] ?? []; ?>
@@ -470,7 +476,7 @@
                                         $total['title']
                                     ) ?>
                                 </td>
-                                <td class="text-end">
+                                <td class="text-end" id="order-total-<?= esc($total['code']) ?>">
                                     <?= esc(
                                         $order['currency_code'] ?? ''
                                     ) ?>
@@ -840,209 +846,456 @@ const editSectionSave = document.getElementById( 'editSectionSave' );
             document.getElementById('editProductVendorPrice').value = vendorPrice;
         }
         if (section === 'product-add') {
-            const orderProductId = button.dataset.orderProductId;
-            editSectionTitle.textContent = 'Edit Product';
+            // const orderProductId = button.dataset.orderProductId;
+            editSectionTitle.textContent = 'Add Product';
             editSectionBody.innerHTML = `
-                <input type="hidden" name="order_product_id" id="editOrderProductId">
+                <input type="hidden" name="product_id" id="addProductId">
 
                 <div class="mb-3">
                     <label class="form-label">Product Name</label>
-                    <input type="text" name="name" id="editProductName" class="form-control" required>
+                    <input type="text" name="name" id="addProductName" class="form-control" required autocomplete="off">
                 </div>
+                <div id="addProductSearchResults" class="list-group position-absolute" style="z-index: 1056; max-height: 220px; overflow-y: auto;" ></div>
 
                 <div class="mb-3">
                     <label class="form-label">Quantity</label>
-                    <input type="number" name="quantity" id="editProductQuantity" class="form-control" min="1" required>
+                    <input type="number" name="quantity" id="addProductQuantity" class="form-control" min="1" required>
                 </div>
 
                 <div class="mb-3">
                     <label class="form-label">Price</label>
-                    <input type="number" name="price" id="editProductPrice" class="form-control" min="0" step="0.01" required>
+                    <input type="number" name="price" id="addProductPrice" class="form-control" min="0" step="0.01" required>
                 </div>
 
                 <div class="mb-3">
                     <label class="form-label">Vendor</label>
-                    <input type="text" name="vendor" id="editProductVendor" class="form-control">
+                    <input type="text" name="vendor" id="addProductVendor" class="form-control">
                 </div>
 
                 <div class="mb-3">
                     <label class="form-label">Vendor Price</label>
-                    <input type="number" name="vendor_price" id="editProductVendorPrice" class="form-control" min="0" step="0.01">
+                    <input type="number" name="vendor_price" id="addProductVendorPrice" class="form-control" min="0" step="0.01">
                 </div>
             `;
+            // Initialize autocomplete only after the modal fields exist.
+            const productNameInput =  editSectionBody.querySelector('#addProductName');
+            const resultsContainer = editSectionBody.querySelector('#addProductSearchResults');
+            const priceInput = editSectionBody.querySelector('#addProductPrice');
+            const productId = editSectionBody.querySelector('#addProductId');
 
-            // document.getElementById('editOrderProductId').value = orderProductId;
-            // document.getElementById('editProductName').value = document.getElementById('product-name-' + orderProductId).textContent.trim();
-            // document.getElementById('editProductQuantity').value = document.getElementById('product-quantity-' + orderProductId).textContent.trim();
-
-            // let price = document.getElementById('product-price-' + orderProductId).textContent.trim();
-
-            // price = price.replace(/[^\d.-]/g, '');
-            // document.getElementById('editProductPrice').value = price;
-            // document.getElementById('editProductVendor').value = document.getElementById('product-vendor-' + orderProductId).textContent.trim();
-            // let vendorPrice = document.getElementById('product-vendor-price-' + orderProductId).textContent.trim();
-            // vendorPrice = vendorPrice.replace(/[^\d.-]/g, '');
-
-            // if (vendorPrice === '-') {
-            //     vendorPrice = '';
-            // }
-
-            // document.getElementById('editProductVendorPrice').value = vendorPrice;
-        }
-    });
-
-    editSectionForm.addEventListener('submit', handleFormSubmit);
-    const editSectionStatusForm = document.getElementById( 'orderStatusForm' );
-    editSectionStatusForm.addEventListener('submit', handleFormSubmit);
-    function handleFormSubmit(event) {
-
-        event.preventDefault();
-        const form = this;
-        const orderId = <?= (int) $order['order_id'] ?>;
-
-        const formData = new FormData(form);
-
-        editSectionSave.disabled = true;
-        editSectionSave.textContent = 'Saving...';
-        editSectionMessage.className = 'px-3 text-muted';
-        editSectionMessage.textContent = 'Saving...';
-
-
-        fetch( '<?= site_url( 'orders/update' ) ?>/' + orderId, {
-                method: 'POST',
-                body: formData,
-                headers: { 'X-Requested-With': 'XMLHttpRequest' }
-            }
-        )
-        .then(function(response) {
-            return response.json();
-
-        })
-        .then(function(data) {
-            if (!data.success) {
-                editSectionMessage.className = 'px-3 text-danger';
-                editSectionMessage.textContent = data.message || 'Unable to update details.';
-
+            if (!productNameInput || !resultsContainer || !priceInput) {
+                console.error('Product search elements are missing from the modal.');
                 return;
             }
 
-            /* CRM response */
-            if ( data.section === 'crm' ) {
-                const orderSourceElement = document.getElementById( 'crm-order-source' );
-                const dispatchDeadlineElement = document.getElementById( 'crm-dispatch-deadline' );
-                const deliveryDateElement = document.getElementById( 'crm-delivery-date' );
-                if (orderSourceElement) {
-                    orderSourceElement.textContent = data.order_source || '-';
+            let searchTimer;
+            let activeRequest = 0;
+                    
+            productNameInput.addEventListener('input', function () {
+                const term = this.value.trim();
+            
+                clearTimeout(searchTimer);
+                resultsContainer.innerHTML = '';
+            
+                if (term.length < 2) {
+                    return;
                 }
-                if (dispatchDeadlineElement) {
-                    dispatchDeadlineElement.textContent = data.dispatch_deadline || '-';
-                }
-                if (deliveryDateElement) {
-                    deliveryDateElement.textContent =data.delivery_date || '-';
-                }
-            }
-            if (data.section === 'customer') {
-                const firstnameElement = document.getElementById('customer-name');
-                const lastnameElement = document.getElementById('customer-lastname');
-                const emailElement = document.getElementById('customer-email');
-                const telephoneElement = document.getElementById('customer-telephone');
+            
+                searchTimer = setTimeout(async () => {
+                    const requestId = ++activeRequest;
+                
+                    try {
+                        const response = await fetch(
+                            '<?= base_url('leads/searchProduct'); ?>?term=' +
+                            encodeURIComponent(term)
+                        );
+                    
+                        if (!response.ok) {
+                            throw new Error(
+                                `Product search failed: HTTP ${response.status}`
+                            );
+                        }
+                    
+                        const data = await response.json();
+                    
+                        // Adjust to match your existing endpoint's response structure.
+                        const products = Array.isArray(data) ? data : (data.products || []);
+                    
+                        // Ignore stale responses if the user has typed a newer query.
+                        if (requestId !== activeRequest) {
+                            return;
+                        }
+                    
+                        resultsContainer.innerHTML = '';
+                    
+                        products.forEach(product => {
+                            const item = document.createElement('button');
+                        
+                            item.type = 'button';
+                            item.className = 'list-group-item list-group-item-action';
+                            item.textContent = product.name;
+                        
+                            item.addEventListener('click', function () {
+                                productNameInput.value = product.name;
+                                productId.value = product.id;
+                            
+                                if (product.special_price !== undefined &&
+                                    product.special_price !== null) {
 
-                if (firstnameElement) {
-                    firstnameElement.textContent = data.firstname + ' ' +data.lastname || '-';
+                                    priceInput.value = product.special_price.replace(/,/g, '');
+                                     
+                                }
+                            
+                                resultsContainer.innerHTML = '';
+                            });
+                        
+                            resultsContainer.appendChild(item);
+                        });
+                    
+                    } catch (error) {
+                        console.error('Product search error:', error);
+                        resultsContainer.innerHTML = '';
+                    }
+                }, 250);
+            });
+
+            // Close suggestions when the user clicks outside the search area.
+            document.addEventListener('click', function closeProductResults(event) {
+                if (!editSectionBody.contains(event.target)) {
+                    resultsContainer.innerHTML = '';
+                    document.removeEventListener('click', closeProductResults);
                 }
-                if (emailElement) {
-                    emailElement.textContent = data.email || '-';
-                }
-                if (telephoneElement) {
-                    telephoneElement.textContent = data.telephone || '-';
-                }
+            });
+
+        }
+    });
+
+    const orderId = <?= (int) $order['order_id'] ?>;
+    const orderUrl = '<?= site_url('orders/update') ?>/' + orderId;
+    const currency = '<?= esc($order['currency_code'] ?? '') ?>';
+
+    editSectionForm.addEventListener('submit', handleFormSubmit);
+
+    const editSectionStatusForm = document.getElementById('orderStatusForm');
+
+    if (editSectionStatusForm) {
+        editSectionStatusForm.addEventListener('submit', handleFormSubmit);
+    }
+
+    /* Common helpers */
+    function escapeHtml(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function setText(id, value) {
+        const element = document.getElementById(id);
+
+        if (element) {
+            element.textContent = value ?? '-';
+        }
+    }
+
+    function formatMoney(value) {
+        return currency + ' ' + Number(value ?? 0).toFixed(2);
+    }
+
+    async function sendOrderUpdate(formData) {
+        const response = await fetch(orderUrl, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
             }
-            if(data.section === 'payment') {
-                $('#paymentReceived').html('<?= esc($order['currency_code'] ?? '') ?> ' + parseFloat(data.payment_received).toFixed(2));
-                $('#paymentDue').html('<?= esc($order['currency_code'] ?? '') ?> ' + parseFloat(data.payment_due).toFixed(2));
-                $('#noPaymentsRow').remove();
-                let payment = data.payment;
-                let row = `
-                    <tr>
-                        <td>${payment.payment_date}</td>
-                        <td>
-                            <?= esc($order['currency_code'] ?? '') ?>
-                            ${parseFloat(payment.amount).toFixed(2)}
-                        </td>
-                        <td>${payment.payment_method ?? '-'}</td>
-                        <td>${payment.payment_reference ?? '-'}</td>
-                        <td>${payment.comment ?? '-'}</td>
-                        <td>${payment.created_by_name ?? '-'}</td>
-                    </tr>
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            throw new Error(data.message || 'Unable to update order.');
+        }
+
+        return data;
+    }
+
+    /* Update order totals and payment summary in one place. */
+    function updateOrderAmounts(data) {
+        setText('orderGrandTotal', formatMoney(data.order_total));
+        setText('paymentReceived', formatMoney(data.payment_received));
+        setText('paymentDue', formatMoney(data.payment_due));
+
+        setText('order-total-sub_total', formatMoney(data.subtotal ?? data.order_total) );
+
+        setText('order-total-total', formatMoney(data.order_total));
+    }
+
+    /* Create the product row in one place. */
+    function createProductRow(product) {
+        const id = product.order_product_id;
+        const price = product.price;
+        const total = product.line_total ?? product.total;
+
+        return `
+            <tr id="product-row-${id}">
+                <td>
+                    <div id="product-name-${id}">
+                        <strong>${escapeHtml(product.name)}</strong>
+                    </div>
+                </td>
+
+                <td id="product-quantity-${id}">
+                    ${Number(product.quantity)}
+                </td>
+
+                <td>
+                    <span id="product-price-${id}">
+                        ${formatMoney(price)}
+                    </span>
+                </td>
+
+                <td>
+                    <span id="product-total-${id}">
+                        ${formatMoney(total)}
+                    </span>
+                </td>
+
+                <td>
+                    <div id="product-vendor-${id}">
+                        ${escapeHtml(product.vendor || '')}
+                    </div>
+                </td>
+
+                <td>
+                    <div id="product-vendor-price-${id}">
+                        ${product.vendor_price !== null &&
+                          product.vendor_price !== ''
+                            ? formatMoney(product.vendor_price)
+                            : '-'}
+                    </div>
+                </td>
+
+                <td>
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-outline-primary edit-section"
+                        data-section="product"
+                        data-order-product-id="${id}"
+                        data-bs-toggle="modal"
+                        data-bs-target="#editSectionModal">
+                        Edit
+                    </button>
+
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-outline-danger remove-product"
+                        data-order-product-id="${id}">
+                        Remove
+                    </button>
+                </td>
+
+                <td>
+                    <span class="text-muted">No file</span>
+                    <div class="mt-2">
+                        <button type="button" class="btn btn-sm btn-outline-primary" > Upload PDF </button>
+                    </div>
+                </td>
+            </tr>`;
+    }
+
+    /* Update an existing product row. */
+    function updateProductRow(data) {
+        const id = data.order_product_id;
+        const nameElement = document.getElementById('product-name-' + id);
+
+        if (nameElement) {
+            nameElement.innerHTML =
+                '<strong>' + escapeHtml(data.name) + '</strong>';
+        }
+
+        setText('product-quantity-' + id, data.quantity);
+        setText('product-price-' + id, formatMoney(data.price));
+        setText('product-total-' + id, formatMoney(data.total));
+        setText('product-vendor-' + id, data.vendor || '');
+
+        setText('product-vendor-price-' + id, data.vendor_price !== null && data.vendor_price !== '' ? formatMoney(data.vendor_price) : '-' );
+    }
+
+    /* Handle all successful AJAX responses. */
+    function handleOrderResponse(data) {
+        if (data.section === 'crm') {
+            setText('crm-order-source', data.order_source || '-');
+            setText('crm-dispatch-deadline', data.dispatch_deadline || '-');
+            setText('crm-delivery-date', data.delivery_date || '-');
+
+            showSuccessToast('CRM details updated successfully.');
+        }
+
+        if (data.section === 'customer') {
+            setText('customer-name', `${data.firstname || ''} ${data.lastname || ''}`.trim() || '-' );
+
+            setText('customer-email', data.email || '-');
+            setText('customer-telephone', data.telephone || '-');
+
+            showSuccessToast('Customer details updated successfully.');
+        }
+
+        if (data.section === 'status') {
+            showSuccessToast('Order status updated successfully.');
+        }
+
+        if (data.section === 'payment') {
+            updateOrderAmounts({ order_total: document.getElementById('orderGrandTotal') ?.textContent?.replace(currency, '').trim(), payment_received: data.payment_received, payment_due: data.payment_due });
+
+            const payment = data.payment;
+            const noPaymentsRow = document.getElementById('noPaymentsRow');
+
+            if (noPaymentsRow) {
+                noPaymentsRow.remove();
+            }
+
+            const paymentList = document.getElementById('paymentList');
+
+            if (paymentList && payment) {
+                const row = document.createElement('tr');
+
+                row.innerHTML = `
+                    <td>${escapeHtml(payment.payment_date)}</td>
+                    <td>${formatMoney(payment.amount)}</td>
+                    <td>${escapeHtml(payment.payment_method || '-')}</td>
+                    <td>${escapeHtml(payment.payment_reference || '-')}</td>
+                    <td>${escapeHtml(payment.comment || '-')}</td>
+                    <td>${escapeHtml(payment.created_by_name || '-')}</td>
                 `;
 
-                $('#paymentList').prepend(row);
+                paymentList.prepend(row);
             }
-            if (data.section === 'crm') {
-                showSuccessToast('CRM details updated successfully.' );
-            } else if (data.section === 'customer') {
-                showSuccessToast( 'Customer details updated successfully.' );
-            } else if (data.section === 'status') {
-                showSuccessToast( 'Order status updated successfully.' );
-            }
-            /* Close modal after successful update. */
-            const modalElement = document.getElementById( 'editSectionModal' );
 
-            if (modalElement) {
-                const closeButton = modalElement.querySelector( '[data-bs-dismiss="modal"]' );
-                if (closeButton) {
-                    closeButton.click();
-                }
+            showSuccessToast(data.message || 'Payment added successfully.');
+        }
+
+        if (data.section === 'product') {
+            updateProductRow(data);
+            updateOrderAmounts(data);
+
+            showSuccessToast('Product updated successfully.');
+        }
+
+        /* Product addition response contains data.product. */
+        if (data.product) {
+            const tbody = document.querySelector('#productsTable tbody');
+
+            if (tbody) {
+                tbody.insertAdjacentHTML(
+                    'beforeend',
+                    createProductRow(data.product)
+                );
             }
-        })
-        .catch(function(error) {
+
+            updateOrderAmounts(data);
+            showSuccessToast(data.message || 'Product added successfully.');
+        }
+
+        if (data.section === 'product-delete') {
+            document.getElementById(
+                'product-row-' + data.order_product_id
+            )?.remove();
+
+            updateOrderAmounts(data);
+            showSuccessToast(data.message || 'Product removed successfully.');
+        }
+
+        /* Close the modal after a successful form submission. */
+        const modalElement = document.getElementById('editSectionModal');
+
+        if (modalElement && window.bootstrap) {
+            const modal = bootstrap.Modal.getInstance(modalElement);
+
+            if (modal) {
+                modal.hide();
+            }
+        }
+    }
+
+    /* Existing forms use the same submit handler. */
+    async function handleFormSubmit(event) {
+        event.preventDefault();
+
+        const form = event.currentTarget;
+        const saveButton = form === editSectionStatusForm
+            ? document.getElementById('updateStatusButton')
+            : editSectionSave;
+
+        if (saveButton) {
+            saveButton.disabled = true;
+            saveButton.textContent = 'Saving...';
+        }
+
+        if (editSectionMessage) {
+            editSectionMessage.className = 'px-3 text-muted';
+            editSectionMessage.textContent = 'Saving...';
+        }
+
+        try {
+            const data = await sendOrderUpdate(new FormData(form));
+
+            handleOrderResponse(data);
+
+            if (editSectionMessage) {
+                editSectionMessage.textContent = '';
+            }
+        } catch (error) {
             console.error(error);
-            editSectionMessage.className = 'px-3 text-danger';
-            editSectionMessage.textContent = 'Unable to update details.';
-        })
-        .finally(function() {
-            editSectionSave.disabled = false;
-            editSectionSave.textContent = 'Save';
-        });
-    }
-    // const productNameInput = document.getElementById('editProductName');
 
-let productSearchTimer;
-// console.log(productNameInput);
-editSectionBody.addEventListener('input', function () {
-    if (event.target && event.target.id === 'editProductName') {
-    const term = this.value.trim();
-
-    // A changed name must not retain a previously selected catalog ID.
-    document.getElementById('add-product-id').value = '';
-
-    clearTimeout(productSearchTimer);
-
-    if (term.length < 2) {
-        document.getElementById('product-search-results').innerHTML = '';
-        return;
+            if (editSectionMessage) {
+                editSectionMessage.className = 'px-3 text-danger';
+                editSectionMessage.textContent = error.message;
+            } else {
+                showSuccessToast(error.message);
+            }
+        } finally {
+            if (saveButton) {
+                saveButton.disabled = false;
+                saveButton.textContent = form === editSectionStatusForm
+                    ? 'Update Status'
+                    : 'Save';
+            }
+        }
     }
 
-    productSearchTimer = setTimeout(() => {
-        fetch('<?= base_url('leads/searchProduct'); ?>?term=' + encodeURIComponent(term))
-            .then(response => response.json())
-            .then(data => {
-                // Render the returned results using your existing
-                // leads product-search result format and selection logic.
-            })
-            .catch(error => console.error('Product search failed:', error));
-    }, 250);
-}
-});
-//escape html
-function escapeHtml( value ) {
-    return value
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-}
+    /* Remove products through the same AJAX request helper. */
+    document.addEventListener('click', async function(event) {
+        const button = event.target.closest('.remove-product');
+
+        if (!button) {
+            return;
+        }
+
+        if (!confirm('Remove this product and permanently delete its associated files?')) {
+            return;
+        }
+
+        const orderProductId = button.dataset.orderProductId;
+        const formData = new FormData(editSectionForm);
+
+        formData.set('section', 'product-delete');
+        formData.set('order_product_id', orderProductId);
+
+        button.disabled = true;
+
+        try {
+            const data = await sendOrderUpdate(formData);
+            handleOrderResponse(data);
+        } catch (error) {
+            console.error(error);
+            showSuccessToast(error.message || 'Unable to remove product.');
+        } finally {
+            button.disabled = false;
+        }
+    });
 </script>
 
 <?php endif; ?>
