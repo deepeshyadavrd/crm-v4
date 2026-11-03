@@ -37,19 +37,19 @@
                     <div class="mb-2">
                         <strong>Name:</strong>
                         <div id="customer-name">
-                        <?= esc(($order['firstname'])  . ' ' . ($order['lastname']) ?? '-') ?>
+                            <?= esc(($order['firstname'])  . ' ' . ($order['lastname']) ?? '-') ?>
                         </div>
                     </div>
                     <div class="mb-2">
                         <strong>Email:</strong>
                         <div id="customer-email">
-                        <?= esc($order['email'] ?? '-') ?>
+                            <?= esc($order['email'] ?? '-') ?>
                         </div>
                     </div>
                     <div>
                         <strong>Telephone:</strong>
                         <div id="customer-telephone">
-                        <?= esc($order['telephone'] ?? '-') ?>
+                            <?= esc($order['telephone'] ?? '-') ?>
                         </div>
                     </div>
                 </div>
@@ -228,36 +228,28 @@
             </div>
         </div>
     </div>
-
     <!-- Products -->
     <div class="card mb-3">
         <div class="card-header d-flex justify-content-between align-items-center">
-    <strong>Products</strong>
-
-    <?php if ($canEdit): ?>
-        <button
-            type="button"
-            class="btn btn-sm btn-primary"
-            data-bs-toggle="modal"
-            data-bs-target="#editSectionModal"
-            data-section="product-add">
-            + Add Product
-        </button>
-    <?php endif; ?>
-</div>
+            <strong>Products</strong>
+            <?php if ($canEdit): ?>
+                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editSectionModal" data-section="product-add"> + Add Product </button>
+            <?php endif; ?>
+        </div>
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-bordered mb-0 align-middle" id="productsTable">
                     <thead>
                         <tr>
                             <th>Product</th>
-                            <!-- <th>Model</th> -->
                             <th>Qty</th>
                             <th>Price</th>
                             <th>Total</th>
+                            <?php if ($canEdit): ?>
                             <th>Vendor</th>
                             <th>Vendor Price</th>
                             <th>Action</th>
+                            <?php endif; ?>
                             <th>Production PDF</th>
                         </tr>
                     </thead>
@@ -265,19 +257,14 @@
                         <?php foreach ($products as $product): ?>
                             <?php
                                 $orderProductId = (int) $product['order_product_id'];
-
                                 $crmProduct = $crmProducts[$orderProductId] ?? [];
                             ?>
-
                             <tr id="product-row-<?= $orderProductId ?>">
                                 <td>
                                     <div id="product-name-<?= $orderProductId ?>">
                                         <strong> <?= esc( $product['name'] ) ?> </strong>
                                     </div>
                                 </td>
-                                <!-- <td>
-                                    <?= esc( $product['model'] ) ?>
-                                </td> -->
                                 <td id="product-quantity-<?= $orderProductId ?>">
                                     <?= (int) $product['quantity'] ?>
                                 </td>
@@ -293,6 +280,7 @@
                                         <?= number_format( (float) $product['total'], 2 ) ?>
                                     </span>
                                 </td>
+                                <?php if ($canEdit): ?>
                                 <td>
                                     <div id="product-vendor-<?= $orderProductId ?>" >
                                         <?= esc( $crmProduct['vendor'] ?? '' ) ?>
@@ -310,13 +298,9 @@
                                 </td>
                                 <td>
                                     <button type="button"class="btn btn-sm btn-outline-primary edit-section" data-section="product"  data-order-product-id="<?= $orderProductId ?>" data-bs-toggle="modal" data-bs-target="#editSectionModal">Edit</button>
-                                    <button
-        type="button"
-        class="btn btn-sm btn-outline-danger remove-product"
-        data-order-product-id="<?= $orderProductId ?>">
-        Remove
-    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger remove-product" data-order-product-id="<?= $orderProductId ?>"> Remove </button>
                                 </td>
+                                <?php endif; ?>
                                 <td>
                                     <?php $files = $crmProduct['files'] ?? []; ?>
                                     <?php if ($files): ?>
@@ -330,7 +314,6 @@
                                     <?php else: ?>
                                         <span class="text-muted"> No file </span>
                                     <?php endif; ?>
-
                                     <?php if ($canEdit): ?>
                                         <div class="mt-2">
                                             <button type="button" class="btn btn-sm btn-outline-primary" > Upload PDF </button>
@@ -358,7 +341,6 @@
                         <?= esc($order['payment_firstname'] ?? '') ?>
                         <?= esc($order['payment_lastname'] ?? '') ?>
                     </div>
-
                     <?php if (!empty($order['payment_company'])): ?>
                         <div>
                             <?= esc($order['payment_company']) ?>
@@ -372,87 +354,58 @@
                             <?= esc($order['payment_address_2'] ) ?>
                         </div>
                     <?php endif; ?>
-
-            <div>
-                <?= esc(
-                    $order['payment_city'] ?? ''
-                ) ?>
-                <?php if (!empty($order['payment_postcode'])): ?>
-                    -
-                    <?= esc(
-                        $order['payment_postcode']
-                    ) ?>
-
-                <?php endif; ?>
-            </div>
-            <div>
-                <?= esc($order['payment_zone'] ?? '') ?>
-                <?php if (!empty($order['payment_country'])): ?>
-
-                    , <?= esc(
-                        $order['payment_country']
-                    ) ?>
-                <?php endif; ?>
-            </div>
+                    <div>
+                        <?= esc($order['payment_city'] ?? '' ) ?>
+                        <?php if (!empty($order['payment_postcode'])): ?>
+                        -
+                        <?= esc($order['payment_postcode']) ?>
+                    <?php endif; ?>
+                </div>
+                <div>
+                    <?= esc($order['payment_zone'] ?? '') ?>
+                    <?php if (!empty($order['payment_country'])): ?>
+                    , <?= esc($order['payment_country']) ?>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
+    </div>
 
-
-        <!-- Shipping Address -->
-        <div class="col-md-6">
-            <div class="card h-100">
-                <div class="card-header">
-                    <strong>Shipping Address</strong>
-                </div>
-                <div class="card-body">
-                <div>
-                <?= esc(
-                    $order['shipping_firstname'] ?? ''
-                ) ?>
-                <?= esc(
-                    $order['shipping_lastname'] ?? ''
-                ) ?>
+    <!-- Shipping Address -->
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <strong>Shipping Address</strong>
             </div>
-
+            <div class="card-body">
+                <div>
+                <?= esc($order['shipping_firstname'] ?? '' ) ?>
+                <?= esc($order['shipping_lastname'] ?? '' ) ?>
+            </div>
             <?php if (!empty($order['shipping_company'])): ?>
                 <div>
-                    <?= esc(
-                        $order['shipping_company']
-                    ) ?>
+                    <?= esc($order['shipping_company']) ?>
                 </div>
             <?php endif; ?>
             <div>
-                <?= esc(
-                    $order['shipping_address_1'] ?? ''
-                ) ?>
+                <?= esc($order['shipping_address_1'] ?? '' ) ?>
             </div>
             <?php if (!empty($order['shipping_address_2'])): ?>
                 <div>
-                    <?= esc(
-                        $order['shipping_address_2']
-                    ) ?>
+                    <?= esc($order['shipping_address_2']) ?>
                 </div>
             <?php endif; ?>
             <div>
-                <?= esc(
-                    $order['shipping_city'] ?? ''
-                ) ?>
+                <?= esc($order['shipping_city'] ?? '') ?>
                 <?php if (!empty($order['shipping_postcode'])): ?>
                     -
-                    <?= esc(
-                        $order['shipping_postcode']
-                    ) ?>
+                <?= esc($order['shipping_postcode']) ?>
                 <?php endif; ?>
             </div>
             <div>
-                <?= esc(
-                    $order['shipping_zone'] ?? ''
-                ) ?>
+                <?= esc($order['shipping_zone'] ?? '') ?>
                 <?php if (!empty($order['shipping_country'])): ?>
-                    , <?= esc(
-                        $order['shipping_country']
-                    ) ?>
+                    , <?= esc($order['shipping_country']) ?>
                 <?php endif; ?>
             </div>
                 </div>
@@ -472,19 +425,11 @@
                         <?php foreach ($totals as $total): ?>
                             <tr>
                                 <td class="text-end">
-                                    <?= esc(
-                                        $total['title']
-                                    ) ?>
+                                    <?= esc($total['title']) ?>
                                 </td>
                                 <td class="text-end" id="order-total-<?= esc($total['code']) ?>">
-                                    <?= esc(
-                                        $order['currency_code'] ?? ''
-                                    ) ?>
-
-                                    <?= number_format(
-                                        (float) $total['value'],
-                                        2
-                                    ) ?>
+                                    <?= esc($order['currency_code'] ?? '') ?>
+                                    <?= number_format((float) $total['value'],2) ?>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -515,27 +460,16 @@
                             <?php foreach ($history as $item): ?>
                                 <tr>
                                     <td>
-                                        <?= esc(
-                                            $item['date_added']
-                                        ) ?>
+                                        <?= esc($item['date_added']) ?>
                                     </td>
                                     <td>
-                                        <?= esc(
-                                            $item['status']
-                                            ?? '-'
-                                        ) ?>
+                                        <?= esc($item['status']?? '-') ?>
                                     </td>
                                     <td>
-                                        <?= esc(
-                                            $item['comment']
-                                            ?? '-'
-                                        ) ?>
+                                        <?= esc($item['comment']?? '-') ?>
                                     </td>
                                     <td>
-                                        <?= esc(
-                                            $item['username']
-                                            ?? '-'
-                                        ) ?>
+                                        <?= esc($item['username']?? '-') ?>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -564,7 +498,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
 
-                <div class="modal-body" id="editSectionBody" >
+                <div class="modal-body" id="editSectionBody">
                 </div>
                 <div id="editSectionMessage" class="px-3">
                 </div>
@@ -584,7 +518,6 @@
                 Details updated successfully.
             </div>
             <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-
         </div>
     </div>
 </div>
@@ -628,13 +561,7 @@ document.querySelectorAll( '.product-update-form' ).forEach(function(form) {
             button.disabled = true;
             message.textContent = 'Saving...';
 
-            fetch(
-                '<?= site_url(
-                    'orders/product/update'
-                ) ?>/' +
-                orderId +
-                '/' +
-                orderProductId,
+            fetch('<?= site_url('orders/product/update') ?>/' + orderId + '/' + orderProductId,
                 {
                     method: 'POST',
                     body: formData,
@@ -905,15 +832,10 @@ const editSectionSave = document.getElementById( 'editSectionSave' );
                     const requestId = ++activeRequest;
                 
                     try {
-                        const response = await fetch(
-                            '<?= base_url('leads/searchProduct'); ?>?term=' +
-                            encodeURIComponent(term)
-                        );
+                        const response = await fetch('<?= base_url('leads/searchProduct'); ?>?term=' + encodeURIComponent(term));
                     
                         if (!response.ok) {
-                            throw new Error(
-                                `Product search failed: HTTP ${response.status}`
-                            );
+                            throw new Error(`Product search failed: HTTP ${response.status}`);
                         }
                     
                         const data = await response.json();
@@ -945,10 +867,8 @@ const editSectionSave = document.getElementById( 'editSectionSave' );
                                     priceInput.value = product.special_price.replace(/,/g, '');
                                      
                                 }
-                            
                                 resultsContainer.innerHTML = '';
                             });
-                        
                             resultsContainer.appendChild(item);
                         });
                     
@@ -1079,20 +999,11 @@ const editSectionSave = document.getElementById( 'editSectionSave' );
                 </td>
 
                 <td>
-                    <button
-                        type="button"
-                        class="btn btn-sm btn-outline-primary edit-section"
-                        data-section="product"
-                        data-order-product-id="${id}"
-                        data-bs-toggle="modal"
-                        data-bs-target="#editSectionModal">
+                    <button type="button" class="btn btn-sm btn-outline-primary edit-section" data-section="product" data-order-product-id="${id}" data-bs-toggle="modal" data-bs-target="#editSectionModal"> 
                         Edit
                     </button>
 
-                    <button
-                        type="button"
-                        class="btn btn-sm btn-outline-danger remove-product"
-                        data-order-product-id="${id}">
+                    <button type="button" class="btn btn-sm btn-outline-danger remove-product" data-order-product-id="${id}">
                         Remove
                     </button>
                 </td>
@@ -1100,7 +1011,7 @@ const editSectionSave = document.getElementById( 'editSectionSave' );
                 <td>
                     <span class="text-muted">No file</span>
                     <div class="mt-2">
-                        <button type="button" class="btn btn-sm btn-outline-primary" > Upload PDF </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary"> Upload PDF </button>
                     </div>
                 </td>
             </tr>`;
@@ -1189,10 +1100,7 @@ const editSectionSave = document.getElementById( 'editSectionSave' );
             const tbody = document.querySelector('#productsTable tbody');
 
             if (tbody) {
-                tbody.insertAdjacentHTML(
-                    'beforeend',
-                    createProductRow(data.product)
-                );
+                tbody.insertAdjacentHTML('beforeend', createProductRow(data.product));
             }
 
             updateOrderAmounts(data);
@@ -1200,9 +1108,7 @@ const editSectionSave = document.getElementById( 'editSectionSave' );
         }
 
         if (data.section === 'product-delete') {
-            document.getElementById(
-                'product-row-' + data.order_product_id
-            )?.remove();
+            document.getElementById('product-row-' + data.order_product_id)?.remove();
 
             updateOrderAmounts(data);
             showSuccessToast(data.message || 'Product removed successfully.');
@@ -1212,10 +1118,12 @@ const editSectionSave = document.getElementById( 'editSectionSave' );
         const modalElement = document.getElementById('editSectionModal');
 
         if (modalElement && window.bootstrap) {
-            const modal = bootstrap.Modal.getInstance(modalElement);
+            // const modal = bootstrap.Modal.getInstance(modalElement);
 
-            if (modal) {
-                modal.hide();
+            const $modal = $(modalElement);
+
+            if ($modal.hasClass('show')) {
+                $modal.modal('hide');
             }
         }
     }

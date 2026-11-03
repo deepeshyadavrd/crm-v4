@@ -39,7 +39,7 @@
   </div>
 </div>
 <!-- Jquery Core Js --> 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script> -->
 <script src="<?=base_url('assets');?>/bundles/libscripts.bundle.js"></script> <!-- Lib Scripts Plugin Js --> 
 <script src="<?=base_url('assets');?>/bundles/vendorscripts.bundle.js"></script> <!-- Lib Scripts Plugin Js --> 
 
@@ -47,6 +47,8 @@
 <script src="<?=base_url('assets');?>/bundles/sparkline.bundle.js"></script>
 <script src="<?=base_url('assets');?>/bundles/knob.bundle.js"></script>
 <script src="<?=base_url('assets');?>/bundles/morrisscripts.bundle.js"></script><!-- Morris Plugin Js -->
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 
 <script src="<?=base_url('assets');?>/bundles/mainscripts.bundle.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Dynatable/0.3.1/jquery.dynatable.min.js"></script>
