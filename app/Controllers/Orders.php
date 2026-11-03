@@ -744,6 +744,15 @@ class Orders extends WSController
 
             case 'product-delete':
                 return $this->removeProductSection($orderId);
+            
+            case 'product-files-upload':
+                return $this->uploadProductFiles($orderId);
+            
+            case 'product-file-replace':
+                return $this->replaceProductFile($orderId);
+            
+            case 'product-file-delete':
+                return $this->deleteProductFile($orderId);
 
             default:
 
@@ -925,6 +934,47 @@ class Orders extends WSController
         if (!$file) {
             throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
         }
+        if (!$this->orderModel->canAccessOrder(
+            (int) $file['order_id'],
+            $this->scope,
+            $this->userId
+        )) {
+            return $this->response->setStatusCode(403);
+        }
+        $filePath = WRITEPATH . $file['file_path'];
+
+        if (!is_file($filePath)) {
+            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+        }
+        
+        return $this->response->download($filePath, null)
+        ->setFileName(basename($file['file_name']));
+    }
+
+    public function filePreview($fileId) {
+
+        $file = $this->orderModel->getCrmOrderProductFile($fileId);
+
+        if (!$file) {
+            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+        }
+
+        /* Check whether the user can access this order. */
+        if (!$this->orderModel->canAccessOrder( (int) $file['order_id'], $this->scope, $this->userId )) {
+            return $this->response->setStatusCode(403);
+        }
+
+        /* Allow only PDF and image previews. */
+        $allowedTypes = [
+            'application/pdf',
+            'image/jpeg',
+            'image/png',
+            'image/webp'
+        ];
+
+        if (!in_array($file['file_type'], $allowedTypes, true)) {
+            return $this->response->setStatusCode(415);
+        }
 
         $filePath = WRITEPATH . $file['file_path'];
 
@@ -936,11 +986,13 @@ class Orders extends WSController
             ->setHeader('Content-Type', $file['file_type'])
             ->setHeader(
                 'Content-Disposition',
-                'inline; filename="' . $file['file_name'] . '"'
+                'inline; filename="' . str_replace('"', '', basename($file['file_name'])) . '"'
             )
             ->setHeader('Content-Length', (string) filesize($filePath))
+            ->setHeader('X-Content-Type-Options', 'nosniff')
             ->setBody(file_get_contents($filePath));
     }
+
     private function updateProductSection(int $orderId) {
         $orderProductId = (int) $this->request->getPost('order_product_id');
         $name = trim((string) $this->request->getPost('name'));
@@ -1205,5 +1257,168 @@ class Orders extends WSController
             'payment_due' => max(0, $orderTotal - $paymentReceived),
             'message' => 'Product removed successfully.'
         ]);
+    }
+
+    /* Upload additional files for an order product. */
+    private function uploadProductFiles(int $orderId) {
+
+        $orderProductId = (int) $this->request->getPost('order_product_id');
+        if ($orderProductId <= 0) {
+            return $this->response
+                ->setStatusCode(400)
+                ->setJSON([
+                    'success' => false,
+                    'message' => 'Invalid order product.'
+                ]);
+        }
+
+        $files = $this->request->getFileMultiple('design_files');
+        if (empty($files)) {
+            return $this->response
+                ->setStatusCode(400)
+                ->setJSON([
+                    'success' => false,
+                    'message' => 'Please select at least one file.'
+                ]);
+        }
+
+        try {
+            $uploadedFiles = $this->orderModel->addCrmOrderProductFiles($orderId, $orderProductId, $files, $this->userId);
+
+            if ($uploadedFiles === false) {
+                return $this->response
+                    ->setStatusCode(400)
+                    ->setJSON([
+                        'success' => false,
+                        'message' => 'Unable to upload product files.'
+                    ]);
+            }
+
+            return $this->response->setJSON([
+                'success' => true,
+                'section' => 'product-files-upload',
+                'order_product_id' => $orderProductId,
+                'files' => $uploadedFiles['files'],
+                'message' => !empty($uploadedFiles['duplicate_files'])
+                    ? 'Some files were already uploaded: ' . implode(', ', $uploadedFiles['duplicate_files'])
+                    : 'Files uploaded successfully.',
+                'duplicate_files' => $uploadedFiles['duplicate_files']
+            ]);
+
+        } catch (Exception $e) {
+
+            log_message('error', 'Product file upload failed: ' . $e->getMessage());
+            return $this->response
+                ->setStatusCode(400)
+                ->setJSON([
+                    'success' => false,
+                    'message' => $e->getMessage()
+                ]);
+        }
+    }
+
+    /* Replace an existing product file. */
+    private function replaceProductFile(int $orderId) {
+        $orderProductId = (int) $this->request->getPost('order_product_id');
+        $fileId = (int) $this->request->getPost('file_id');
+        $file = $this->request->getFile('design_file');
+
+        if ($orderProductId <= 0 || $fileId <= 0) {
+            return $this->response
+                ->setStatusCode(400)
+                ->setJSON([
+                    'success' => false,
+                    'message' => 'Invalid product or file.'
+                ]);
+        }
+
+        if (!$file || !$file->isValid()) {
+            return $this->response
+                ->setStatusCode(400)
+                ->setJSON([
+                    'success' => false,
+                    'message' => 'Please select a valid replacement file.'
+                ]);
+        }
+
+        try {
+            $uploadedFiles = $this->orderModel->replaceCrmOrderProductFile($orderId, $orderProductId, $fileId, $file, $this->userId);
+
+            if ($uploadedFiles === false) {
+                return $this->response
+                    ->setStatusCode(400)
+                    ->setJSON([
+                        'success' => false,
+                        'message' => 'Unable to replace product file.'
+                    ]);
+            }
+
+            return $this->response->setJSON([
+                'success' => true,
+                'section' => 'product-file-replace',
+                'order_product_id' => $orderProductId,
+                'files' => $uploadedFiles,
+                'message' => 'File replaced successfully.'
+            ]);
+
+        } catch (Exception $e) {
+
+            log_message('error', 'Product file replacement failed: ' . $e->getMessage());
+            return $this->response
+                ->setStatusCode(400)
+                ->setJSON([
+                    'success' => false,
+                    'message' => $e->getMessage()
+                ]);
+        }
+    }
+
+    /* Delete a product file. */
+    private function deleteProductFile(int $orderId) {
+
+        $orderProductId = (int) $this->request->getPost('order_product_id');
+        $fileId = (int) $this->request->getPost('file_id');
+
+        if ($orderProductId <= 0 || $fileId <= 0) {
+            return $this->response
+                ->setStatusCode(400)
+                ->setJSON([
+                    'success' => false,
+                    'message' => 'Invalid product or file.'
+                ]);
+        }
+
+        try {
+
+            $uploadedFiles = $this->orderModel->deleteCrmOrderProductFile($orderId, $orderProductId, $fileId);
+
+            if ($uploadedFiles === false) {
+                return $this->response
+                    ->setStatusCode(400)
+                    ->setJSON([
+                        'success' => false,
+                        'message' => 'Unable to delete product file.'
+                    ]);
+            }
+
+            return $this->response->setJSON([
+                'success' => true,
+                'section' => 'product-file-delete',
+                'order_product_id' => $orderProductId,
+                'files' => $uploadedFiles,
+                'message' => 'File deleted successfully.'
+            ]);
+
+        } catch (Exception $e) {
+
+            log_message('error', 'Product file deletion failed: ' . $e->getMessage());
+
+            return $this->response
+                ->setStatusCode(400)
+                ->setJSON([
+                    'success' => false,
+                    'message' => $e->getMessage()
+                ]);
+        }
     }
 }

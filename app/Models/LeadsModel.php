@@ -116,7 +116,7 @@ class LeadsModel extends Model
     ) {
         $builder->where(
             'rc.date_added >',
-            date('Y-m-d', strtotime('-30 days'))
+            date('Y-m-d', strtotime('-90 days'))
         );
     } else {
 

@@ -37,19 +37,19 @@
                     <div class="mb-2">
                         <strong>Name:</strong>
                         <div id="customer-name">
-                        <?= esc(($order['firstname'])  . ' ' . ($order['lastname']) ?? '-') ?>
+                            <?= esc(($order['firstname'])  . ' ' . ($order['lastname']) ?? '-') ?>
                         </div>
                     </div>
                     <div class="mb-2">
                         <strong>Email:</strong>
                         <div id="customer-email">
-                        <?= esc($order['email'] ?? '-') ?>
+                            <?= esc($order['email'] ?? '-') ?>
                         </div>
                     </div>
                     <div>
                         <strong>Telephone:</strong>
                         <div id="customer-telephone">
-                        <?= esc($order['telephone'] ?? '-') ?>
+                            <?= esc($order['telephone'] ?? '-') ?>
                         </div>
                     </div>
                 </div>
@@ -228,36 +228,28 @@
             </div>
         </div>
     </div>
-
     <!-- Products -->
     <div class="card mb-3">
         <div class="card-header d-flex justify-content-between align-items-center">
-    <strong>Products</strong>
-
-    <?php if ($canEdit): ?>
-        <button
-            type="button"
-            class="btn btn-sm btn-primary"
-            data-bs-toggle="modal"
-            data-bs-target="#editSectionModal"
-            data-section="product-add">
-            + Add Product
-        </button>
-    <?php endif; ?>
-</div>
+            <strong>Products</strong>
+            <?php if ($canEdit): ?>
+                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editSectionModal" data-section="product-add"> + Add Product </button>
+            <?php endif; ?>
+        </div>
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-bordered mb-0 align-middle" id="productsTable">
                     <thead>
                         <tr>
                             <th>Product</th>
-                            <!-- <th>Model</th> -->
                             <th>Qty</th>
                             <th>Price</th>
                             <th>Total</th>
+                            <?php if ($canEdit): ?>
                             <th>Vendor</th>
                             <th>Vendor Price</th>
                             <th>Action</th>
+                            <?php endif; ?>
                             <th>Production PDF</th>
                         </tr>
                     </thead>
@@ -265,19 +257,14 @@
                         <?php foreach ($products as $product): ?>
                             <?php
                                 $orderProductId = (int) $product['order_product_id'];
-
                                 $crmProduct = $crmProducts[$orderProductId] ?? [];
                             ?>
-
                             <tr id="product-row-<?= $orderProductId ?>">
                                 <td>
                                     <div id="product-name-<?= $orderProductId ?>">
                                         <strong> <?= esc( $product['name'] ) ?> </strong>
                                     </div>
                                 </td>
-                                <!-- <td>
-                                    <?= esc( $product['model'] ) ?>
-                                </td> -->
                                 <td id="product-quantity-<?= $orderProductId ?>">
                                     <?= (int) $product['quantity'] ?>
                                 </td>
@@ -293,6 +280,7 @@
                                         <?= number_format( (float) $product['total'], 2 ) ?>
                                     </span>
                                 </td>
+                                <?php if ($canEdit): ?>
                                 <td>
                                     <div id="product-vendor-<?= $orderProductId ?>" >
                                         <?= esc( $crmProduct['vendor'] ?? '' ) ?>
@@ -310,33 +298,90 @@
                                 </td>
                                 <td>
                                     <button type="button"class="btn btn-sm btn-outline-primary edit-section" data-section="product"  data-order-product-id="<?= $orderProductId ?>" data-bs-toggle="modal" data-bs-target="#editSectionModal">Edit</button>
-                                    <button
-        type="button"
-        class="btn btn-sm btn-outline-danger remove-product"
-        data-order-product-id="<?= $orderProductId ?>">
-        Remove
-    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger remove-product" data-order-product-id="<?= $orderProductId ?>"> Remove </button>
                                 </td>
+                                <?php endif; ?>
                                 <td>
-                                    <?php $files = $crmProduct['files'] ?? []; ?>
-                                    <?php if ($files): ?>
-                                        <?php foreach ( $files as $file ): ?>
-                                            <div class="mb-1">
-                                                <a href="<?= site_url('orders/file/download/' . (int) $file['crm_order_product_file_id']) ?>" class="text-decoration-none" >
-                                                    <?= esc( $file['file_name'] ) ?>
-                                                </a>
-                                            </div>
-                                        <?php endforeach; ?>
-                                    <?php else: ?>
-                                        <span class="text-muted"> No file </span>
-                                    <?php endif; ?>
+    <?php $files = $crmProduct['files'] ?? []; ?>
 
-                                    <?php if ($canEdit): ?>
-                                        <div class="mt-2">
-                                            <button type="button" class="btn btn-sm btn-outline-primary" > Upload PDF </button>
-                                        </div>
-                                    <?php endif; ?>
-                                </td>
+    <div id="product-files-<?= $orderProductId ?>">
+        <?php if ($files): ?>
+            <?php foreach ($files as $file): ?>
+                <div class="d-flex align-items-center justify-content-between gap-2 mb-2"
+                     id="product-file-<?= (int) $file['crm_order_product_file_id'] ?>">
+
+                    <div class="text-break">
+                        <a href="<?= site_url('orders/file/download/' . (int) $file['crm_order_product_file_id']) ?>"
+                           class="text-decoration-none">
+                            <?= esc($file['file_name']) ?>
+                        </a>
+                    </div>
+
+                    <?php if ($canEdit): ?>
+                        <div class="d-flex gap-1 flex-shrink-0">
+
+                            <!-- <button type="button"
+                                    class="btn btn-sm btn-outline-primary product-file-replace"
+                                    data-order-product-id="<?= $orderProductId ?>"
+                                    data-file-id="<?= (int) $file['crm_order_product_file_id'] ?>">
+                                Replace
+                            </button>
+
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-danger product-file-delete"
+                                    data-order-product-id="<?= $orderProductId ?>"
+                                    data-file-id="<?= (int) $file['crm_order_product_file_id'] ?>">
+                                X
+                            </button> -->
+                            <button type="button"
+                class="btn btn-sm btn-outline-info product-file-preview"
+                data-file-id="<?= (int) $file['crm_order_product_file_id'] ?>"
+                data-file-name="<?= esc($file['file_name']) ?>"
+                data-file-type="<?= esc($file['file_type']) ?>">
+                <i class="zmdi zmdi-desktop-mac"></i>
+        </button>
+
+        <a href="<?= site_url('orders/file/download/' . (int) $file['crm_order_product_file_id']) ?>"
+           class="btn btn-sm btn-outline-success">
+           <i class="zmdi zmdi-download"></i>
+        </a>
+
+        <button type="button"
+                class="btn btn-sm btn-outline-primary product-file-replace"
+                data-order-product-id="<?= $orderProductId ?>"
+                data-file-id="<?= (int) $file['crm_order_product_file_id'] ?>">
+                <i class="zmdi zmdi-replay"></i>
+        </button>
+
+        <button type="button"
+                class="btn btn-sm btn-outline-danger product-file-delete"
+                data-order-product-id="<?= $orderProductId ?>"
+                data-file-id="<?= (int) $file['crm_order_product_file_id'] ?>">
+            X
+        </button>
+
+    
+
+                        </div>
+                    <?php endif; ?>
+
+                </div>
+            <?php endforeach; ?>
+        <?php else: ?>
+            <span class="text-muted">No file</span>
+        <?php endif; ?>
+    </div>
+
+    <?php if ($canEdit): ?>
+        <div class="mt-2">
+            <button type="button"
+                    class="btn btn-sm btn-outline-primary product-file-upload"
+                    data-order-product-id="<?= $orderProductId ?>">
+                + Upload Files
+            </button>
+        </div>
+    <?php endif; ?>
+</td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>
@@ -358,7 +403,6 @@
                         <?= esc($order['payment_firstname'] ?? '') ?>
                         <?= esc($order['payment_lastname'] ?? '') ?>
                     </div>
-
                     <?php if (!empty($order['payment_company'])): ?>
                         <div>
                             <?= esc($order['payment_company']) ?>
@@ -372,87 +416,58 @@
                             <?= esc($order['payment_address_2'] ) ?>
                         </div>
                     <?php endif; ?>
-
-            <div>
-                <?= esc(
-                    $order['payment_city'] ?? ''
-                ) ?>
-                <?php if (!empty($order['payment_postcode'])): ?>
-                    -
-                    <?= esc(
-                        $order['payment_postcode']
-                    ) ?>
-
-                <?php endif; ?>
-            </div>
-            <div>
-                <?= esc($order['payment_zone'] ?? '') ?>
-                <?php if (!empty($order['payment_country'])): ?>
-
-                    , <?= esc(
-                        $order['payment_country']
-                    ) ?>
-                <?php endif; ?>
-            </div>
+                    <div>
+                        <?= esc($order['payment_city'] ?? '' ) ?>
+                        <?php if (!empty($order['payment_postcode'])): ?>
+                        -
+                        <?= esc($order['payment_postcode']) ?>
+                    <?php endif; ?>
+                </div>
+                <div>
+                    <?= esc($order['payment_zone'] ?? '') ?>
+                    <?php if (!empty($order['payment_country'])): ?>
+                    , <?= esc($order['payment_country']) ?>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
+    </div>
 
-
-        <!-- Shipping Address -->
-        <div class="col-md-6">
-            <div class="card h-100">
-                <div class="card-header">
-                    <strong>Shipping Address</strong>
-                </div>
-                <div class="card-body">
-                <div>
-                <?= esc(
-                    $order['shipping_firstname'] ?? ''
-                ) ?>
-                <?= esc(
-                    $order['shipping_lastname'] ?? ''
-                ) ?>
+    <!-- Shipping Address -->
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <strong>Shipping Address</strong>
             </div>
-
+            <div class="card-body">
+                <div>
+                <?= esc($order['shipping_firstname'] ?? '' ) ?>
+                <?= esc($order['shipping_lastname'] ?? '' ) ?>
+            </div>
             <?php if (!empty($order['shipping_company'])): ?>
                 <div>
-                    <?= esc(
-                        $order['shipping_company']
-                    ) ?>
+                    <?= esc($order['shipping_company']) ?>
                 </div>
             <?php endif; ?>
             <div>
-                <?= esc(
-                    $order['shipping_address_1'] ?? ''
-                ) ?>
+                <?= esc($order['shipping_address_1'] ?? '' ) ?>
             </div>
             <?php if (!empty($order['shipping_address_2'])): ?>
                 <div>
-                    <?= esc(
-                        $order['shipping_address_2']
-                    ) ?>
+                    <?= esc($order['shipping_address_2']) ?>
                 </div>
             <?php endif; ?>
             <div>
-                <?= esc(
-                    $order['shipping_city'] ?? ''
-                ) ?>
+                <?= esc($order['shipping_city'] ?? '') ?>
                 <?php if (!empty($order['shipping_postcode'])): ?>
                     -
-                    <?= esc(
-                        $order['shipping_postcode']
-                    ) ?>
+                <?= esc($order['shipping_postcode']) ?>
                 <?php endif; ?>
             </div>
             <div>
-                <?= esc(
-                    $order['shipping_zone'] ?? ''
-                ) ?>
+                <?= esc($order['shipping_zone'] ?? '') ?>
                 <?php if (!empty($order['shipping_country'])): ?>
-                    , <?= esc(
-                        $order['shipping_country']
-                    ) ?>
+                    , <?= esc($order['shipping_country']) ?>
                 <?php endif; ?>
             </div>
                 </div>
@@ -472,19 +487,11 @@
                         <?php foreach ($totals as $total): ?>
                             <tr>
                                 <td class="text-end">
-                                    <?= esc(
-                                        $total['title']
-                                    ) ?>
+                                    <?= esc($total['title']) ?>
                                 </td>
                                 <td class="text-end" id="order-total-<?= esc($total['code']) ?>">
-                                    <?= esc(
-                                        $order['currency_code'] ?? ''
-                                    ) ?>
-
-                                    <?= number_format(
-                                        (float) $total['value'],
-                                        2
-                                    ) ?>
+                                    <?= esc($order['currency_code'] ?? '') ?>
+                                    <?= number_format((float) $total['value'],2) ?>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -515,27 +522,16 @@
                             <?php foreach ($history as $item): ?>
                                 <tr>
                                     <td>
-                                        <?= esc(
-                                            $item['date_added']
-                                        ) ?>
+                                        <?= esc($item['date_added']) ?>
                                     </td>
                                     <td>
-                                        <?= esc(
-                                            $item['status']
-                                            ?? '-'
-                                        ) ?>
+                                        <?= esc($item['status']?? '-') ?>
                                     </td>
                                     <td>
-                                        <?= esc(
-                                            $item['comment']
-                                            ?? '-'
-                                        ) ?>
+                                        <?= esc($item['comment']?? '-') ?>
                                     </td>
                                     <td>
-                                        <?= esc(
-                                            $item['username']
-                                            ?? '-'
-                                        ) ?>
+                                        <?= esc($item['username']?? '-') ?>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -564,7 +560,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
 
-                <div class="modal-body" id="editSectionBody" >
+                <div class="modal-body" id="editSectionBody">
                 </div>
                 <div id="editSectionMessage" class="px-3">
                 </div>
@@ -584,6 +580,38 @@
                 Details updated successfully.
             </div>
             <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="productFilePreviewModal" tabindex="-1"
+     aria-labelledby="productFilePreviewTitle" aria-hidden="true">
+
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="productFilePreviewTitle">
+                    File Preview
+                </h5>
+
+                <button type="button" class="btn-close"
+                        data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body text-center" style="min-height: 300px;">
+
+                <img id="productFilePreviewImage"
+                     src=""
+                     class="img-fluid d-none"
+                     alt="Product file preview">
+
+                <iframe id="productFilePreviewFrame"
+                        src=""
+                        class="w-100 d-none"
+                        style="height: 75vh; border: 0;">
+                </iframe>
+
+            </div>
 
         </div>
     </div>
@@ -625,16 +653,11 @@ document.querySelectorAll( '.product-update-form' ).forEach(function(form) {
             const vendorPriceInput = document.querySelector( '#vendor-price-' + orderProductId + ' input[name="vendor_price"]' );
 
             const button = form.querySelector( 'button[type="submit"]' );
-            button.disabled = true;
+            // button.disabled = true;
+            setButtonLoading(button, 'Saving...');
             message.textContent = 'Saving...';
 
-            fetch(
-                '<?= site_url(
-                    'orders/product/update'
-                ) ?>/' +
-                orderId +
-                '/' +
-                orderProductId,
+            fetch('<?= site_url('orders/product/update') ?>/' + orderId + '/' + orderProductId,
                 {
                     method: 'POST',
                     body: formData,
@@ -679,7 +702,8 @@ document.querySelectorAll( '.product-update-form' ).forEach(function(form) {
 
             })
             .finally(function() {
-                button.disabled = false;
+                // button.disabled = false;
+                resetButtonLoading(button);
             });
         }
     );
@@ -905,15 +929,10 @@ const editSectionSave = document.getElementById( 'editSectionSave' );
                     const requestId = ++activeRequest;
                 
                     try {
-                        const response = await fetch(
-                            '<?= base_url('leads/searchProduct'); ?>?term=' +
-                            encodeURIComponent(term)
-                        );
+                        const response = await fetch('<?= base_url('leads/searchProduct'); ?>?term=' + encodeURIComponent(term));
                     
                         if (!response.ok) {
-                            throw new Error(
-                                `Product search failed: HTTP ${response.status}`
-                            );
+                            throw new Error(`Product search failed: HTTP ${response.status}`);
                         }
                     
                         const data = await response.json();
@@ -945,10 +964,8 @@ const editSectionSave = document.getElementById( 'editSectionSave' );
                                     priceInput.value = product.special_price.replace(/,/g, '');
                                      
                                 }
-                            
                                 resultsContainer.innerHTML = '';
                             });
-                        
                             resultsContainer.appendChild(item);
                         });
                     
@@ -983,6 +1000,38 @@ const editSectionSave = document.getElementById( 'editSectionSave' );
     }
 
     /* Common helpers */
+    function setButtonLoading(button, text = 'Processing...') {
+
+if (!button || button.dataset.loading === 'true') {
+    return;
+}
+
+button.dataset.loading = 'true';
+button.dataset.originalHtml = button.innerHTML;
+button.disabled = true;
+
+button.innerHTML = `
+    <span class="spinner-border spinner-border-sm me-1"
+          role="status" aria-hidden="true"></span>
+    ${text}
+`;
+}
+
+function resetButtonLoading(button) {
+
+if (!button) {
+    return;
+}
+
+button.disabled = false;
+
+if (button.dataset.originalHtml !== undefined) {
+    button.innerHTML = button.dataset.originalHtml;
+}
+
+delete button.dataset.originalHtml;
+delete button.dataset.loading;
+}
     function escapeHtml(value) {
         return String(value ?? '')
             .replace(/&/g, '&amp;')
@@ -1079,28 +1128,26 @@ const editSectionSave = document.getElementById( 'editSectionSave' );
                 </td>
 
                 <td>
-                    <button
-                        type="button"
-                        class="btn btn-sm btn-outline-primary edit-section"
-                        data-section="product"
-                        data-order-product-id="${id}"
-                        data-bs-toggle="modal"
-                        data-bs-target="#editSectionModal">
+                    <button type="button" class="btn btn-sm btn-outline-primary edit-section" data-section="product" data-order-product-id="${id}" data-bs-toggle="modal" data-bs-target="#editSectionModal"> 
                         Edit
                     </button>
 
-                    <button
-                        type="button"
-                        class="btn btn-sm btn-outline-danger remove-product"
-                        data-order-product-id="${id}">
+                    <button type="button" class="btn btn-sm btn-outline-danger remove-product" data-order-product-id="${id}">
                         Remove
                     </button>
                 </td>
 
                 <td>
-                    <span class="text-muted">No file</span>
+                    <div id="product-files-${id}">
+                        <span class="text-muted">No file</span>
+                    </div>
+
                     <div class="mt-2">
-                        <button type="button" class="btn btn-sm btn-outline-primary" > Upload PDF </button>
+                        <button type="button"
+                                class="btn btn-sm btn-outline-primary product-file-upload"
+                                data-order-product-id="${id}">
+                            + Upload Files
+                        </button>
                     </div>
                 </td>
             </tr>`;
@@ -1189,10 +1236,7 @@ const editSectionSave = document.getElementById( 'editSectionSave' );
             const tbody = document.querySelector('#productsTable tbody');
 
             if (tbody) {
-                tbody.insertAdjacentHTML(
-                    'beforeend',
-                    createProductRow(data.product)
-                );
+                tbody.insertAdjacentHTML('beforeend', createProductRow(data.product));
             }
 
             updateOrderAmounts(data);
@@ -1200,9 +1244,7 @@ const editSectionSave = document.getElementById( 'editSectionSave' );
         }
 
         if (data.section === 'product-delete') {
-            document.getElementById(
-                'product-row-' + data.order_product_id
-            )?.remove();
+            document.getElementById('product-row-' + data.order_product_id)?.remove();
 
             updateOrderAmounts(data);
             showSuccessToast(data.message || 'Product removed successfully.');
@@ -1212,10 +1254,12 @@ const editSectionSave = document.getElementById( 'editSectionSave' );
         const modalElement = document.getElementById('editSectionModal');
 
         if (modalElement && window.bootstrap) {
-            const modal = bootstrap.Modal.getInstance(modalElement);
+            // const modal = bootstrap.Modal.getInstance(modalElement);
 
-            if (modal) {
-                modal.hide();
+            const $modal = $(modalElement);
+
+            if ($modal.hasClass('show')) {
+                $modal.modal('hide');
             }
         }
     }
@@ -1295,6 +1339,266 @@ const editSectionSave = document.getElementById( 'editSectionSave' );
         } finally {
             button.disabled = false;
         }
+    });
+
+    /* Render product files after AJAX operations. */
+    function renderProductFiles(orderProductId, files) {
+
+        const container = document.getElementById('product-files-' + orderProductId);
+
+        if (!container) {
+            return;
+        }
+
+        if (!files || files.length === 0) {
+            container.innerHTML = '<span class="text-muted">No file</span>';
+            return;
+        }
+
+        let html = '';
+        files.forEach(function(file) {
+            const fileId = Number(file.crm_order_product_file_id);
+
+            html += `
+                <div class="d-flex align-items-center justify-content-between gap-2 mb-2"
+                     id="product-file-${fileId}">
+
+                    <div class="text-break">
+                        ${escapeHtml(file.file_name)}
+                    </div>
+
+                    <div class="d-flex gap-1 flex-shrink-0">
+
+                        <button type="button"
+                                class="btn btn-sm btn-outline-primary product-file-preview"
+                                data-file-id="${fileId}"
+                                data-file-name="${escapeHtml(file.file_name)}"
+                                data-file-type="${escapeHtml(file.file_type)}">
+                            <i class="zmdi zmdi-desktop-mac"></i>
+                        </button>
+
+                        <a href="<?= site_url('orders/file/download/') ?>${fileId}"
+                           class="btn btn-sm btn-outline-success">
+                            <i class="zmdi zmdi-download"></i>
+                        </a>
+
+                        <button type="button"
+                                class="btn btn-sm btn-outline-primary product-file-replace"
+                                data-order-product-id="${orderProductId}"
+                                data-file-id="${fileId}">
+                            <i class="zmdi zmdi-replay"></i>
+                        </button>
+
+                        <button type="button"
+                                class="btn btn-sm btn-outline-danger product-file-delete"
+                                data-order-product-id="${orderProductId}"
+                                data-file-id="${fileId}">
+                            X
+                        </button>
+
+                    </div>
+
+                </div>
+            `;
+        });
+
+        container.innerHTML = html;
+    }
+
+
+    /* Preview uploaded product file. */
+    function previewProductFile(fileId, fileName, fileType) {
+
+        const modalElement = document.getElementById('productFilePreviewModal');
+        const image = document.getElementById('productFilePreviewImage');
+        const frame = document.getElementById('productFilePreviewFrame');
+        const title = document.getElementById('productFilePreviewTitle');
+
+        image.classList.add('d-none');
+        frame.classList.add('d-none');
+
+        image.src = '';
+        frame.src = '';
+
+        title.textContent = fileName;
+
+        const previewUrl = '<?= site_url('orders/file/preview/') ?>' + fileId;
+
+        if (fileType === 'application/pdf') {
+
+            frame.src = previewUrl;
+            frame.classList.remove('d-none');
+
+        } else if (fileType.startsWith('image/')) {
+
+            image.src = previewUrl;
+            image.classList.remove('d-none');
+
+        } else {
+
+            alert('Preview is not available for this file type.');
+            return;
+        }
+
+        bootstrap.Modal.getOrCreateInstance(modalElement).show();
+    }
+
+
+    /* Handle preview button clicks. */
+    document.addEventListener('click', function(e) {
+
+        const button = e.target.closest('.product-file-preview');
+
+        if (!button) {
+            return;
+        }
+
+        previewProductFile(
+            button.dataset.fileId,
+            button.dataset.fileName,
+            button.dataset.fileType
+        );
+    });
+
+
+    /* Clear preview when modal closes. */
+    document.getElementById('productFilePreviewModal').addEventListener('hidden.bs.modal', function() {
+
+        document.getElementById('productFilePreviewImage').src = '';
+        document.getElementById('productFilePreviewFrame').src = '';
+
+    });
+
+
+    /* Upload or replace files using the existing AJAX endpoint. */
+    async function uploadProductFiles(orderProductId, selectedFiles, fileId = 0) {
+
+        const formData = new FormData();
+
+        formData.append('section',fileId > 0 ? 'product-file-replace' : 'product-files-upload');
+        formData.append('order_product_id', orderProductId);
+
+        if (fileId > 0) {
+            formData.append('file_id', fileId);
+            formData.append('design_file', selectedFiles[0]);
+
+        } else {
+            selectedFiles.forEach(function(file) {
+                formData.append('design_files[]', file);
+            });
+        }
+
+        try {
+
+            const data = await sendOrderUpdate(formData);
+            renderProductFiles(
+                orderProductId,
+                data.files
+            );
+
+            alert(data.message);
+
+        } catch (error) {
+            console.error(error);
+            alert(error.message || 'Unable to upload file.');
+        }
+    }
+
+
+    /* Handle file upload, replacement and deletion buttons. */
+    document.getElementById('productsTable').addEventListener('click', function(event) {
+
+        const uploadButton = event.target.closest('.product-file-upload');
+        const replaceButton = event.target.closest('.product-file-replace');
+        const deleteButton = event.target.closest('.product-file-delete');
+        
+        
+        /* Upload additional files. */
+        if (uploadButton) {
+        
+            const orderProductId = uploadButton.dataset.orderProductId;
+        
+            const input = document.createElement('input');
+        
+            input.type = 'file';
+            input.multiple = true;
+            input.accept = '.pdf,.jpg,.jpeg,.png,.webp';
+        
+            input.addEventListener('change', function() {
+            
+                if (this.files.length > 0) {
+                    uploadProductFiles(orderProductId, Array.from(this.files));
+                }
+            
+            });
+        
+            input.click();
+        
+            return;
+        }
+
+
+        /* Replace an existing file. */
+        if (replaceButton) {
+        
+            const orderProductId = replaceButton.dataset.orderProductId;
+            const fileId = replaceButton.dataset.fileId;
+        
+            const input = document.createElement('input');
+        
+            input.type = 'file';
+            input.accept = '.pdf,.jpg,.jpeg,.png,.webp';
+        
+            input.addEventListener('change', function() {
+            
+                if (this.files.length > 0) {
+                    uploadProductFiles(
+                        orderProductId,
+                        Array.from(this.files),
+                        fileId
+                    );
+                }
+            
+            });
+        
+            input.click();
+        
+            return;
+        }
+
+        /* Delete an existing file. */
+        if (deleteButton) {
+        
+            const orderProductId = deleteButton.dataset.orderProductId;
+            const fileId = deleteButton.dataset.fileId;
+        
+            if (!confirm('Are you sure you want to delete this file?')) {
+                return;
+            }
+        
+            const formData = new FormData();
+        
+            formData.append('section', 'product-file-delete');
+            formData.append('order_product_id', orderProductId);
+            formData.append('file_id', fileId);
+        
+            sendOrderUpdate(formData)
+                .then(function(data) {
+                
+                    renderProductFiles(
+                        orderProductId,
+                        data.files
+                    );
+                
+                })
+                .catch(function(error) {
+                
+                    console.error(error);
+                    alert(error.message || 'Unable to delete file.');
+                
+                });
+        }
+
     });
 </script>
 

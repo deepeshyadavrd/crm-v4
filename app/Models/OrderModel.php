@@ -938,6 +938,284 @@ class OrderModel extends Model {
             ->getRowArray();
     }
 
+    /* ADD PRODUCT DESIGN FILES */
+    public function addCrmOrderProductFiles(int $orderId, int $orderProductId, array $files, int $uploadedBy): array|false {
+
+        /* Verify that this product belongs to this order. */
+        $product = $this->db
+            ->table('oc_order_product')
+            ->where('order_id', $orderId)
+            ->where('order_product_id', $orderProductId)
+            ->get()
+            ->getRowArray();
+
+        if (!$product || $uploadedBy <= 0) {
+            return false;
+        }
+
+        $uploadPath = WRITEPATH . 'uploads/order_designs/' . $orderId . '/' . $orderProductId . '/';
+
+        if (!is_dir($uploadPath)) {
+            if (!mkdir($uploadPath, 0755, true) && !is_dir($uploadPath)) {
+                throw new Exception('Failed to create product design upload directory.');
+            }
+        }
+
+        $allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
+        $movedFiles = [];
+        $duplicateFiles = [];
+
+        $this->db->transBegin();
+
+        try {
+
+            foreach ($files as $file) {
+                if (!$file || !$file->isValid()) {
+                    if ($file && $file->getError() !== UPLOAD_ERR_NO_FILE) {
+                        throw new Exception('Failed to upload product design file.');
+                    }
+                    continue;
+                }
+                if ($file->getSize() > 10 * 1024 * 1024) {
+                    throw new Exception('Product design file cannot exceed 10 MB.');
+                }
+                $mimeType = $file->getMimeType();
+                if (!in_array($mimeType, $allowedTypes, true)) {
+                    throw new Exception('Invalid product design file type.');
+                }
+
+                /* Check if the same filename already exists for this product. */
+                $existingFile = $this->db
+                    ->table('oc_crm_order_product_file')
+                    ->where('order_id', $orderId)
+                    ->where('order_product_id', $orderProductId)
+                    ->where('file_name', $file->getClientName())
+                    ->get()
+                    ->getRowArray();
+
+                if ($existingFile) {
+                    $duplicateFiles[] = $file->getClientName();
+                    continue;
+                }
+
+                /* Generate a safe random filename. */
+                $newFileName = $file->getRandomName();
+
+                if (!$file->move($uploadPath, $newFileName)) {
+                    throw new Exception('Failed to save product design file.');
+                }
+
+                $movedFiles[] = $uploadPath . $newFileName;
+
+                $this->db->table('oc_crm_order_product_file')->insert([
+                    'order_id'         => $orderId,
+                    'order_product_id' => $orderProductId,
+                    'file_name'        => $file->getClientName(),
+                    'file_path'        => 'uploads/order_designs/' . $orderId . '/' . $orderProductId . '/' . $newFileName,
+                    'file_type'        => $mimeType,
+                    'file_size'        => $file->getSize(),
+                    'uploaded_by'      => $uploadedBy,
+                    'date_added'       => date('Y-m-d H:i:s')
+                ]);
+
+                if ($this->db->affectedRows() <= 0) {
+                    throw new Exception('Failed to save product design file information.');
+                }
+            }
+
+            if ($this->db->transStatus() === false) {
+                throw new Exception('Failed to upload product design files.');
+            }
+
+            $this->db->transCommit();
+
+            return [
+                'files' => $this->getCrmOrderProductFiles($orderId, $orderProductId),
+                'duplicate_files' => $duplicateFiles
+            ];
+
+        } catch (\Throwable $e) {
+
+            $this->db->transRollback();
+
+            /* Remove any newly uploaded physical files if the operation failed. */
+            foreach ($movedFiles as $path) {
+                if (is_file($path)) {
+                    unlink($path);
+                }
+            }
+
+            log_message('error', 'Product file upload failed: ' . $e->getMessage());
+
+            throw new Exception($e->getMessage());
+        }
+    }
+    /* REPLACE PRODUCT DESIGN FILE */
+    public function replaceCrmOrderProductFile(int $orderId, int $orderProductId, int $fileId, $file, int $uploadedBy): array|false {
+
+        /* Verify that the existing file belongs to this product and order. */
+        $oldFile = $this->db
+            ->table('oc_crm_order_product_file')
+            ->where('crm_order_product_file_id', $fileId)
+            ->where('order_id', $orderId)
+            ->where('order_product_id', $orderProductId)
+            ->get()
+            ->getRowArray();
+
+        if (!$oldFile || $uploadedBy <= 0) {
+            return false;
+        }
+        if (!$file || !$file->isValid()) {
+            throw new Exception('Please select a valid replacement file.');
+        }
+        if ($file->getSize() > 10 * 1024 * 1024) {
+            throw new Exception('Product design file cannot exceed 10 MB.');
+        }
+
+        $allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
+        $mimeType = $file->getMimeType();
+
+        if (!in_array($mimeType, $allowedTypes, true)) {
+            throw new Exception('Invalid product design file type.');
+        }
+
+        $uploadPath = WRITEPATH . 'uploads/order_designs/' . $orderId . '/' . $orderProductId . '/';
+
+        if (!is_dir($uploadPath)) {
+            if (!mkdir($uploadPath, 0755, true) && !is_dir($uploadPath)) {
+                throw new Exception('Failed to create product design upload directory.');
+            }
+        }
+
+        $newFileName = $file->getRandomName();
+        $newFilePath = $uploadPath . $newFileName;
+
+        if (!$file->move($uploadPath, $newFileName)) {
+            throw new Exception('Failed to save replacement file.');
+        }
+
+        $storedPath = 'uploads/order_designs/' . $orderId . '/' . $orderProductId . '/' . $newFileName;
+
+        $this->db->transBegin();
+
+        try {
+            /* Insert the replacement file first. */
+            $this->db->table('oc_crm_order_product_file')->insert([
+                'order_id'         => $orderId,
+                'order_product_id' => $orderProductId,
+                'file_name'        => $file->getClientName(),
+                'file_path'        => $storedPath,
+                'file_type'        => $mimeType,
+                'file_size'        => $file->getSize(),
+                'uploaded_by'      => $uploadedBy,
+                'date_added'       => date('Y-m-d H:i:s')
+            ]);
+
+            $newFileId = (int) $this->db->insertID();
+            if ($newFileId <= 0) {
+                throw new Exception('Failed to save replacement file information.');
+            }
+
+            /* Delete the old database record only after the new record exists. */
+            $this->db
+                ->table('oc_crm_order_product_file')
+                ->where('crm_order_product_file_id', $fileId)
+                ->where('order_id', $orderId)
+                ->where('order_product_id', $orderProductId)
+                ->delete();
+
+            if ($this->db->transStatus() === false) {
+                throw new Exception('Failed to replace product design file.');
+            }
+
+            $this->db->transCommit();
+
+            /* Delete old physical file after successful database commit. */
+            $this->deleteCrmOrderProductPhysicalFile($oldFile, $orderId, $orderProductId);
+
+            return $this->getCrmOrderProductFiles($orderId, $orderProductId);
+
+        } catch (\Throwable $e) {
+
+            $this->db->transRollback();
+            if (is_file($newFilePath)) {
+                unlink($newFilePath);
+            }
+
+            log_message('error', 'Product file replacement failed: ' . $e->getMessage());
+            throw new Exception($e->getMessage());
+        }
+    }
+
+    /* DELETE SINGLE PRODUCT DESIGN FILE */
+    public function deleteCrmOrderProductFile(int $orderId, int $orderProductId, int $fileId): array|false {
+
+        $file = $this->db
+            ->table('oc_crm_order_product_file')
+            ->where('crm_order_product_file_id', $fileId)
+            ->where('order_id', $orderId)
+            ->where('order_product_id', $orderProductId)
+            ->get()
+            ->getRowArray();
+
+        if (!$file) {
+            return false;
+        }
+
+        $this->db->transBegin();
+
+        try {
+
+            $this->db
+                ->table('oc_crm_order_product_file')
+                ->where('crm_order_product_file_id', $fileId)
+                ->where('order_id', $orderId)
+                ->where('order_product_id', $orderProductId)
+                ->delete();
+
+            if ($this->db->transStatus() === false) {
+                throw new Exception('Failed to delete product design file.');
+            }
+
+            $this->db->transCommit();
+
+            /* Delete physical file after database deletion succeeds. */
+            $this->deleteCrmOrderProductPhysicalFile($file, $orderId, $orderProductId);
+
+            return $this->getCrmOrderProductFiles($orderId, $orderProductId);
+
+        } catch (\Throwable $e) {
+
+            $this->db->transRollback();
+
+            log_message('error', 'Product file deletion failed: ' . $e->getMessage());
+
+            throw new Exception($e->getMessage());
+        }
+    }
+    /* DELETE PHYSICAL PRODUCT DESIGN FILE */
+    private function deleteCrmOrderProductPhysicalFile(array $file, int $orderId, int $orderProductId): bool {
+
+        $relativePath = 'uploads/order_designs/' . $orderId . '/' . $orderProductId . '/';
+        $storedPath = str_replace('\\', '/', $file['file_path'] ?? '');
+
+        if (strpos($storedPath, $relativePath) !== 0) {
+            return false;
+        }
+
+        $fileName = substr($storedPath, strlen($relativePath));
+        if ($fileName === '' || strpos($fileName, '/') !== false || strpos($fileName, '..') !== false) {
+            return false;
+        }
+
+        $physicalPath = WRITEPATH . $relativePath . $fileName;
+        if (is_file($physicalPath)) {
+            return unlink($physicalPath);
+        }
+
+        return true;
+    }
+
     public function updateCrmOrderProduct( int $orderId, int $orderProductId, string $name, int $quantity, float $price, ?string $vendor, ?float $vendorPrice ): bool {
     
         $orderProduct = $this->db
