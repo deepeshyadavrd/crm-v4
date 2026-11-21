@@ -1274,8 +1274,9 @@ delete button.dataset.loading;
             : editSectionSave;
 
         if (saveButton) {
-            saveButton.disabled = true;
-            saveButton.textContent = 'Saving...';
+            // saveButton.disabled = true;
+            // saveButton.textContent = 'Saving...';
+            setButtonLoading(saveButton, 'Saving...');
         }
 
         if (editSectionMessage) {
@@ -1302,10 +1303,11 @@ delete button.dataset.loading;
             }
         } finally {
             if (saveButton) {
-                saveButton.disabled = false;
-                saveButton.textContent = form === editSectionStatusForm
-                    ? 'Update Status'
-                    : 'Save';
+                // saveButton.disabled = false;
+                // saveButton.textContent = form === editSectionStatusForm
+                //     ? 'Update Status'
+                //     : 'Save';
+                resetButtonLoading(saveButton);
             }
         }
     }
@@ -1328,7 +1330,8 @@ delete button.dataset.loading;
         formData.set('section', 'product-delete');
         formData.set('order_product_id', orderProductId);
 
-        button.disabled = true;
+        // button.disabled = true;
+        setButtonLoading(button, 'Removing...');
 
         try {
             const data = await sendOrderUpdate(formData);
@@ -1337,7 +1340,8 @@ delete button.dataset.loading;
             console.error(error);
             showSuccessToast(error.message || 'Unable to remove product.');
         } finally {
-            button.disabled = false;
+            // button.disabled = false;
+            resetButtonLoading(button);
         }
     });
 
@@ -1471,8 +1475,8 @@ delete button.dataset.loading;
 
 
     /* Upload or replace files using the existing AJAX endpoint. */
-    async function uploadProductFiles(orderProductId, selectedFiles, fileId = 0) {
-
+    async function uploadProductFiles(orderProductId, selectedFiles, fileId = 0, button = null) {
+        setButtonLoading(button, fileId > 0 ? 'Replacing...' : 'Uploading...');
         const formData = new FormData();
 
         formData.append('section',fileId > 0 ? 'product-file-replace' : 'product-files-upload');
@@ -1501,6 +1505,8 @@ delete button.dataset.loading;
         } catch (error) {
             console.error(error);
             alert(error.message || 'Unable to upload file.');
+        } finally {
+            resetButtonLoading(button);
         }
     }
 
@@ -1527,7 +1533,7 @@ delete button.dataset.loading;
             input.addEventListener('change', function() {
             
                 if (this.files.length > 0) {
-                    uploadProductFiles(orderProductId, Array.from(this.files));
+                    uploadProductFiles(orderProductId, Array.from(this.files), 0, uploadButton);
                 }
             
             });
@@ -1555,7 +1561,7 @@ delete button.dataset.loading;
                     uploadProductFiles(
                         orderProductId,
                         Array.from(this.files),
-                        fileId
+                        fileId, uploadButton
                     );
                 }
             
@@ -1592,10 +1598,12 @@ delete button.dataset.loading;
                 
                 })
                 .catch(function(error) {
-                
                     console.error(error);
                     alert(error.message || 'Unable to delete file.');
                 
+                })
+                .finally(function() {
+                    resetButtonLoading(deleteButton);
                 });
         }
 
