@@ -341,10 +341,16 @@
                 <i class="zmdi zmdi-desktop-mac"></i>
         </button>
 
-        <a href="<?= site_url('orders/file/download/' . (int) $file['crm_order_product_file_id']) ?>"
+        <!-- <a href="<?= site_url('orders/file/download/' . (int) $file['crm_order_product_file_id']) ?>"
            class="btn btn-sm btn-outline-success">
            <i class="zmdi zmdi-download"></i>
-        </a>
+        </a> -->
+        <button type="button"
+                class="btn btn-sm btn-outline-success product-file-download"
+                data-download-url="<?= esc(site_url('orders/file/download/' . (int) $file['crm_order_product_file_id']), 'attr') ?>"
+                data-file-name="<?= esc($file['file_name'], 'attr') ?>">
+            <i class="zmdi zmdi-download"></i>
+        </button>
 
         <button type="button"
                 class="btn btn-sm btn-outline-primary product-file-replace"
@@ -395,157 +401,175 @@
         <!-- Payment Address -->
         <div class="col-md-6">
             <div class="card h-100">
-                <div class="card-header">
+                <div class="card-header d-flex justify-content-between align-items-center">
                     <strong>Payment Address</strong>
+                    <?php if ($canEdit): ?>
+                        <button type="button"
+                                class="btn btn-sm btn-outline-primary edit-section"
+                                data-section="payment-address"
+                                data-bs-toggle="modal"
+                                data-bs-target="#editSectionModal">
+                            Edit
+                        </button>
+                    <?php endif; ?>
                 </div>
                 <div class="card-body">
                     <div>
-                        <?= esc($order['payment_firstname'] ?? '') ?>
-                        <?= esc($order['payment_lastname'] ?? '') ?>
+                        <span id="payment-firstname"><?= esc($order['payment_firstname'] ?? '') ?></span>
+                        <span id="payment-lastname"><?= esc($order['payment_lastname'] ?? '') ?></span>
                     </div>
                     <?php if (!empty($order['payment_company'])): ?>
-                        <div>
+                        <div id="payment-company">
                             <?= esc($order['payment_company']) ?>
                         </div>
                     <?php endif; ?>
-                    <div>
+                    <div id="payment-address-1">
                         <?= esc($order['payment_address_1'] ?? '' ) ?>
                     </div>
                     <?php if (!empty($order['payment_address_2'])): ?>
-                        <div>
+                        <div id="payment-address-2">
                             <?= esc($order['payment_address_2'] ) ?>
                         </div>
                     <?php endif; ?>
                     <div>
-                        <?= esc($order['payment_city'] ?? '' ) ?>
+                        <span id="payment-city"><?= esc($order['payment_city'] ?? '' ) ?></span>
                         <?php if (!empty($order['payment_postcode'])): ?>
+                            -
+                            <span id="payment-postcode"><?= esc($order['payment_postcode']) ?></span>
+                        <?php endif; ?>
+                    </div>
+                    <div>
+                        <span id="payment-zone"><?= esc($order['payment_zone'] ?? '') ?></span>
+                        <?php if (!empty($order['payment_country'])): ?>
+                            , <span id="payment-country"><?= esc($order['payment_country']) ?></span>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Shipping Address -->
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <strong>Shipping Address</strong>
+                    <?php if ($canEdit): ?>
+                        <button type="button"
+                                class="btn btn-sm btn-outline-primary edit-section"
+                                data-section="shipping-address"
+                                data-bs-toggle="modal"
+                                data-bs-target="#editSectionModal">
+                            Edit
+                        </button>
+                    <?php endif; ?>
+                </div>
+                <div class="card-body">
+                    <div>
+                        <span id="shipping-firstname"><?= esc($order['shipping_firstname'] ?? '' ) ?></span>
+                        <span id="shipping-lastname"><?= esc($order['shipping_lastname'] ?? '' ) ?></span>
+                </div>
+                <?php if (!empty($order['shipping_company'])): ?>
+                    <div id="shipping-company">
+                        <?= esc($order['shipping_company']) ?>
+                    </div>
+                <?php endif; ?>
+                <div id="shipping-address-1">
+                    <?= esc($order['shipping_address_1'] ?? '' ) ?>
+                </div>
+                <?php if (!empty($order['shipping_address_2'])): ?>
+                    <div id="shipping-address-2">
+                        <?= esc($order['shipping_address_2']) ?>
+                    </div>
+                <?php endif; ?>
+                <div>
+                    <span id="shipping-city"><?= esc($order['shipping_city'] ?? '') ?></span>
+                    <?php if (!empty($order['shipping_postcode'])): ?>
                         -
-                        <?= esc($order['payment_postcode']) ?>
+                        <span id="shipping-postcode"><?= esc($order['shipping_postcode']) ?></span>
                     <?php endif; ?>
                 </div>
                 <div>
-                    <?= esc($order['payment_zone'] ?? '') ?>
-                    <?php if (!empty($order['payment_country'])): ?>
-                    , <?= esc($order['payment_country']) ?>
+                    <span id="shipping-zone"><?= esc($order['shipping_zone'] ?? '') ?></span>
+                    <?php if (!empty($order['shipping_country'])): ?>
+                        , <span id="shipping-country"><?= esc($order['shipping_country']) ?></span>
                     <?php endif; ?>
+                </div>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Shipping Address -->
-    <div class="col-md-6">
-        <div class="card h-100">
+        <!-- Order Totals -->
+        <div class="card mb-3">
             <div class="card-header">
-                <strong>Shipping Address</strong>
+                <strong>Order Totals</strong>
             </div>
-            <div class="card-body">
-                <div>
-                <?= esc($order['shipping_firstname'] ?? '' ) ?>
-                <?= esc($order['shipping_lastname'] ?? '' ) ?>
-            </div>
-            <?php if (!empty($order['shipping_company'])): ?>
-                <div>
-                    <?= esc($order['shipping_company']) ?>
-                </div>
-            <?php endif; ?>
-            <div>
-                <?= esc($order['shipping_address_1'] ?? '' ) ?>
-            </div>
-            <?php if (!empty($order['shipping_address_2'])): ?>
-                <div>
-                    <?= esc($order['shipping_address_2']) ?>
-                </div>
-            <?php endif; ?>
-            <div>
-                <?= esc($order['shipping_city'] ?? '') ?>
-                <?php if (!empty($order['shipping_postcode'])): ?>
-                    -
-                <?= esc($order['shipping_postcode']) ?>
-                <?php endif; ?>
-            </div>
-            <div>
-                <?= esc($order['shipping_zone'] ?? '') ?>
-                <?php if (!empty($order['shipping_country'])): ?>
-                    , <?= esc($order['shipping_country']) ?>
-                <?php endif; ?>
-            </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Order Totals -->
-    <div class="card mb-3">
-        <div class="card-header">
-            <strong>Order Totals</strong>
-        </div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-sm table-bordered mb-0">
-                    <tbody>
-                        <?php foreach ($totals as $total): ?>
-                            <tr>
-                                <td class="text-end">
-                                    <?= esc($total['title']) ?>
-                                </td>
-                                <td class="text-end" id="order-total-<?= esc($total['code']) ?>">
-                                    <?= esc($order['currency_code'] ?? '') ?>
-                                    <?= number_format((float) $total['value'],2) ?>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- Order History -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <strong>Order History</strong>
-        </div>
-        <div class="card-body p-0">
-            <?php if ($history): ?>
+            <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-sm table-bordered mb-0">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Status</th>
-                                <th>Comment</th>
-                                <th>Added By</th>
-                            </tr>
-                        </thead>
                         <tbody>
-                            <?php foreach ($history as $item): ?>
+                            <?php foreach ($totals as $total): ?>
                                 <tr>
-                                    <td>
-                                        <?= esc($item['date_added']) ?>
+                                    <td class="text-end">
+                                        <?= esc($total['title']) ?>
                                     </td>
-                                    <td>
-                                        <?= esc($item['status']?? '-') ?>
-                                    </td>
-                                    <td>
-                                        <?= esc($item['comment']?? '-') ?>
-                                    </td>
-                                    <td>
-                                        <?= esc($item['username']?? '-') ?>
+                                    <td class="text-end" id="order-total-<?= esc($total['code']) ?>">
+                                        <?= esc($order['currency_code'] ?? '') ?>
+                                        <?= number_format((float) $total['value'],2) ?>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>
                     </table>
                 </div>
-            <?php else: ?>
-                <div class="p-3 text-muted">
-                    No order history found.
-                </div>
-            <?php endif; ?>
+            </div>
+        </div>
+
+        <!-- Order History -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <strong>Order History</strong>
+            </div>
+            <div class="card-body p-0">
+                <?php if ($history): ?>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th>Comment</th>
+                                    <th>Added By</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($history as $item): ?>
+                                    <tr>
+                                        <td>
+                                            <?= esc($item['date_added']) ?>
+                                        </td>
+                                        <td>
+                                            <?= esc($item['status']?? '-') ?>
+                                        </td>
+                                        <td>
+                                            <?= esc($item['comment']?? '-') ?>
+                                        </td>
+                                        <td>
+                                            <?= esc($item['username']?? '-') ?>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                <?php else: ?>
+                    <div class="p-3 text-muted">
+                        No order history found.
+                    </div>
+                <?php endif; ?>
+            </div>
         </div>
     </div>
-</div>
 
 <?php if ($canEdit): ?>
 
@@ -793,6 +817,170 @@ const editSectionSave = document.getElementById( 'editSectionSave' );
                 </div>
             `;
         }
+        /* Payment Address */
+if (section === 'payment-address') {
+
+editSectionTitle.textContent = 'Edit Payment Address';
+
+editSectionBody.innerHTML = `
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label class="form-label">First Name</label>
+            <input type="text" class="form-control" name="firstname" id="editPaymentFirstname" required>
+        </div>
+
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Last Name</label>
+            <input type="text" class="form-control" name="lastname" id="editPaymentLastname">
+        </div>
+
+        <div class="col-md-12 mb-3">
+            <label class="form-label">Company</label>
+            <input type="text" class="form-control" name="company" id="editPaymentCompany">
+        </div>
+
+        <div class="col-md-12 mb-3">
+            <label class="form-label">Address 1</label>
+            <input type="text" class="form-control" name="address_1" id="editPaymentAddress1" required>
+        </div>
+
+        <div class="col-md-12 mb-3">
+            <label class="form-label">Address 2</label>
+            <input type="text" class="form-control" name="address_2" id="editPaymentAddress2">
+        </div>
+
+        <div class="col-md-6 mb-3">
+            <label class="form-label">City</label>
+            <input type="text" class="form-control" name="city" id="editPaymentCity" required>
+        </div>
+
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Postcode</label>
+            <input type="text" class="form-control" name="postcode" id="editPaymentPostcode">
+        </div>
+
+        <div class="col-md-6 mb-3">
+            <label class="form-label">State / Zone</label>
+            <input type="text" class="form-control" name="zone" id="editPaymentZone">
+        </div>
+
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Country</label>
+            <input type="text" class="form-control" name="country" id="editPaymentCountry" required>
+        </div>
+    </div>
+`;
+
+document.getElementById('editPaymentFirstname').value =
+    document.getElementById('payment-firstname').textContent.trim();
+
+document.getElementById('editPaymentLastname').value =
+    document.getElementById('payment-lastname').textContent.trim();
+
+document.getElementById('editPaymentCompany').value =
+    document.getElementById('payment-company')?.textContent.trim() ?? '';
+
+document.getElementById('editPaymentAddress1').value =
+    document.getElementById('payment-address-1').textContent.trim();
+    
+document.getElementById('editPaymentAddress2').value =
+    document.getElementById('payment-address-2')?.textContent.trim() ?? '';
+
+document.getElementById('editPaymentCity').value =
+    document.getElementById('payment-city').textContent.trim();
+
+document.getElementById('editPaymentPostcode').value =
+    document.getElementById('payment-postcode').textContent.trim();
+
+document.getElementById('editPaymentZone').value =
+    document.getElementById('payment-zone').textContent.trim();
+
+document.getElementById('editPaymentCountry').value =
+    document.getElementById('payment-country').textContent.trim();
+}
+
+
+/* Shipping Address */
+if (section === 'shipping-address') {
+
+editSectionTitle.textContent = 'Edit Shipping Address';
+
+editSectionBody.innerHTML = `
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label class="form-label">First Name</label>
+            <input type="text" class="form-control" name="firstname" id="editShippingFirstname" required>
+        </div>
+
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Last Name</label>
+            <input type="text" class="form-control" name="lastname" id="editShippingLastname">
+        </div>
+
+        <div class="col-md-12 mb-3">
+            <label class="form-label">Company</label>
+            <input type="text" class="form-control" name="company" id="editShippingCompany">
+        </div>
+
+        <div class="col-md-12 mb-3">
+            <label class="form-label">Address 1</label>
+            <input type="text" class="form-control" name="address_1" id="editShippingAddress1" required>
+        </div>
+
+        <div class="col-md-12 mb-3">
+            <label class="form-label">Address 2</label>
+            <input type="text" class="form-control" name="address_2" id="editShippingAddress2">
+        </div>
+
+        <div class="col-md-6 mb-3">
+            <label class="form-label">City</label>
+            <input type="text" class="form-control" name="city" id="editShippingCity" required>
+        </div>
+
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Postcode</label>
+            <input type="text" class="form-control" name="postcode" id="editShippingPostcode">
+        </div>
+
+        <div class="col-md-6 mb-3">
+            <label class="form-label">State / Zone</label>
+            <input type="text" class="form-control" name="zone" id="editShippingZone">
+        </div>
+
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Country</label>
+            <input type="text" class="form-control" name="country" id="editShippingCountry" required>
+        </div>
+    </div>
+`;
+
+document.getElementById('editShippingFirstname').value =
+    document.getElementById('shipping-firstname').textContent.trim();
+
+document.getElementById('editShippingLastname').value =
+    document.getElementById('shipping-lastname').textContent.trim();
+
+document.getElementById('editShippingCompany').value =
+    document.getElementById('shipping-company').textContent.trim();
+
+document.getElementById('editShippingAddress1').value =
+    document.getElementById('shipping-address-1').textContent.trim();
+
+document.getElementById('editShippingAddress2').value =
+    document.getElementById('shipping-address-2').textContent.trim();
+
+document.getElementById('editShippingCity').value =
+    document.getElementById('shipping-city').textContent.trim();
+
+document.getElementById('editShippingPostcode').value =
+    document.getElementById('shipping-postcode').textContent.trim();
+
+document.getElementById('editShippingZone').value =
+    document.getElementById('shipping-zone').textContent.trim();
+
+document.getElementById('editShippingCountry').value =
+    document.getElementById('shipping-country').textContent.trim();
+}
         if (section === 'payment') {
             editSectionTitle.textContent ='Add Payment Details';
 
@@ -1009,9 +1197,10 @@ if (!button || button.dataset.loading === 'true') {
 button.dataset.loading = 'true';
 button.dataset.originalHtml = button.innerHTML;
 button.disabled = true;
+button.classList.add('text-white');
 
 button.innerHTML = `
-    <span class="spinner-border spinner-border-sm me-1"
+    <span class="spinner-border spinner-border-sm me-1 text-white"
           role="status" aria-hidden="true"></span>
     ${text}
 `;
@@ -1381,10 +1570,12 @@ delete button.dataset.loading;
                             <i class="zmdi zmdi-desktop-mac"></i>
                         </button>
 
-                        <a href="<?= site_url('orders/file/download/') ?>${fileId}"
-                           class="btn btn-sm btn-outline-success">
+                        <button type="button"
+                                class="btn btn-sm btn-outline-success product-file-download"
+                                data-download-url="<?= site_url('orders/file/download/') ?>${fileId}"
+                                data-file-name="${escapeHtml(file.file_name)}">
                             <i class="zmdi zmdi-download"></i>
-                        </a>
+                        </button>
 
                         <button type="button"
                                 class="btn btn-sm btn-outline-primary product-file-replace"
@@ -1411,7 +1602,7 @@ delete button.dataset.loading;
 
 
     /* Preview uploaded product file. */
-    function previewProductFile(fileId, fileName, fileType) {
+    function previewProductFile(fileId, fileName, fileType, button) {
 
         const modalElement = document.getElementById('productFilePreviewModal');
         const image = document.getElementById('productFilePreviewImage');
@@ -1428,17 +1619,28 @@ delete button.dataset.loading;
 
         const previewUrl = '<?= site_url('orders/file/preview/') ?>' + fileId;
 
+        setButtonLoading(button, 'Loading...');
+
+        const resetPreviewButton = function() {
+            resetButtonLoading(button);
+        };
+
         if (fileType === 'application/pdf') {
+            frame.onload = resetPreviewButton;
+            frame.onerror = resetPreviewButton;
 
             frame.src = previewUrl;
             frame.classList.remove('d-none');
 
         } else if (fileType.startsWith('image/')) {
+            frame.onload = resetPreviewButton;
+            frame.onerror = resetPreviewButton;
 
             image.src = previewUrl;
             image.classList.remove('d-none');
 
         } else {
+            resetPreviewButton();
 
             alert('Preview is not available for this file type.');
             return;
@@ -1460,7 +1662,8 @@ delete button.dataset.loading;
         previewProductFile(
             button.dataset.fileId,
             button.dataset.fileName,
-            button.dataset.fileType
+            button.dataset.fileType,
+            button
         );
     });
 
@@ -1517,6 +1720,7 @@ delete button.dataset.loading;
         const uploadButton = event.target.closest('.product-file-upload');
         const replaceButton = event.target.closest('.product-file-replace');
         const deleteButton = event.target.closest('.product-file-delete');
+        const downloadButton = event.target.closest('.product-file-download');
         
         
         /* Upload additional files. */
@@ -1543,6 +1747,49 @@ delete button.dataset.loading;
             return;
         }
 
+    if (downloadButton) {
+
+        const downloadUrl = downloadButton.dataset.downloadUrl;
+        const fileName = downloadButton.dataset.fileName;
+
+        setButtonLoading(downloadButton, 'Downloading...');
+
+        fetch(downloadUrl)
+            .then(function(response) {
+            
+                if (!response.ok) {
+                    throw new Error('Unable to download file.');
+                }
+            
+                return response.blob();
+            })
+            .then(function(blob) {
+            
+                const fileUrl = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+            
+                link.href = fileUrl;
+                link.download = fileName;
+            
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+            
+                URL.revokeObjectURL(fileUrl);
+            
+            })
+            .catch(function(error) {
+            
+                console.error(error);
+                alert(error.message || 'Unable to download file.');
+            
+            })
+            .finally(function() {
+                resetButtonLoading(downloadButton);
+            });
+        
+        return;
+    }
 
         /* Replace an existing file. */
         if (replaceButton) {
@@ -1561,7 +1808,7 @@ delete button.dataset.loading;
                     uploadProductFiles(
                         orderProductId,
                         Array.from(this.files),
-                        fileId, uploadButton
+                        fileId, replaceButton
                     );
                 }
             
@@ -1588,6 +1835,8 @@ delete button.dataset.loading;
             formData.append('order_product_id', orderProductId);
             formData.append('file_id', fileId);
         
+            setButtonLoading(deleteButton, 'Deleting...');
+
             sendOrderUpdate(formData)
                 .then(function(data) {
                 
