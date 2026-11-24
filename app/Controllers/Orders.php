@@ -948,22 +948,22 @@ class Orders extends WSController
         
         // Get updated status.
         $newOrder = $this->orderModel->getOrder($orderId);
-        
+
         // Record CRM history.
         $createdBy = (int) session()->get('user_id');
         $username = (string) (session()->get('username') ?? '');
-        
+
         $oldValue = [
             'order_status_id' => $oldOrder['order_status_id'],
             'status' => $oldOrder['order_status'] ?? ''
         ];
-    
+
         $newValue = [
             'order_status_id' => $orderstatusid,
             'status' => $newOrder['order_status'] ?? '',
             'comment' => $comment
         ];
-    
+
         $this->orderModel->addOrderHistory(
             $orderId,
             $createdBy,
@@ -1001,7 +1001,23 @@ class Orders extends WSController
                         'Amount is required.'
                 ]);
         }
-    
+        
+        // Get payment totals before adding payment.
+        $orderTotal = (float) $this->orderModel->getOrderTotal($orderId);
+        $paymentsBefore = $this->orderModel->getOrderPayments($orderId);
+        $receivedBefore = 0;
+
+        foreach ($paymentsBefore as $paymentRow) {
+            $receivedBefore += (float) $paymentRow['amount'];
+        }
+
+        $dueBefore = $orderTotal - $receivedBefore;
+
+        $oldValue = [
+            'order_total' => $orderTotal,
+            'payment_received' => $receivedBefore,
+            'payment_due' => $dueBefore
+        ];
     
         $updated = $this->orderModel->addPayment($orderId, $amount, $paymentMethod, $paymentReference, $paymentComment, $paymentDate, $createdBy);
     
@@ -1017,6 +1033,39 @@ class Orders extends WSController
         }
         // print_r($updated);
         $payment = $this->orderModel->getPayment($updated);
+        // Get payment totals after adding payment.
+        $payments = $this->orderModel->getOrderPayments($orderId);
+        $paymentReceived = 0;
+
+        foreach ($payments as $paymentRow) {
+            $paymentReceived += (float) $paymentRow['amount'];
+        }
+
+        $paymentDue = $orderTotal - $paymentReceived;
+        // Record CRM payment history.
+        $username = (string) (session()->get('username') ?? '');
+
+        $newValue = [
+            'payment_id' => $updated,
+            'amount' => $amount,
+            'payment_method' => $paymentMethod,
+            'payment_reference' => $paymentReference,
+            'payment_date' => $paymentDate,
+            'comment' => $paymentComment,
+            'order_total' => $orderTotal,
+            'payment_received' => $paymentReceived,
+            'payment_due' => $paymentDue
+        ];
+
+        $this->orderModel->addOrderHistory(
+            $orderId,
+            (int) $createdBy,
+            $username,
+            'payment_added',
+            'Payment of ' . $amount . ' added successfully.',
+            $oldValue,
+            $newValue
+        );
         $orderTotal = (float) $this->orderModel->getOrderTotal($orderId);
         $payments = $this->orderModel->getOrderPayments($orderId);
         $paymentReceived = 0;
@@ -1032,6 +1081,7 @@ class Orders extends WSController
                 'success' => true,
                 'section' => 'payment',
                 'payment'          => $payment,
+                'order_total' => $orderTotal,
                 'payment_received' => $paymentReceived,
                 'payment_due'      => $paymentDue,
                 'message'          => 'Payment added successfully.'
