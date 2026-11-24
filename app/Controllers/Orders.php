@@ -150,7 +150,7 @@ class Orders extends WSController
             'paymentDue' => $paymentDue,
             'statuses' => $this->orderModel->getOrderStatuses(),
             'history' =>
-                $this->orderModel->getOrderHistory(
+                $this->orderModel->getRecentOrderHistory(
                     $orderId
                 ),
             'canViewAll' => $this->canViewAll,
@@ -768,7 +768,29 @@ class Orders extends WSController
         $orderSource = trim( (string) $this->request->getPost( 'order_source' ) );
         $dispatchDeadline = $this->request->getPost( 'dispatch_deadline' );
         $deliveryDate = $this->request->getPost( 'delivery_date' );
-    
+        // Get existing CRM details before updating.
+        $oldOrder = $this->orderModel->getOrder($orderId);
+
+        if (!$oldOrder) {
+            return $this->response
+                ->setStatusCode(404)
+                ->setJSON([
+                    'success' => false,
+                    'message' => 'Order not found.'
+                ]);
+        }
+
+        $oldValue = [
+            'order_source' => $oldOrder['order_source'] ?? '',
+            'dispatch_deadline' => $oldOrder['dispatch_deadline'] ?? '',
+            'delivery_date' => $oldOrder['delivery_date'] ?? ''
+        ];
+
+        $newValue = [
+            'order_source' => $orderSource,
+            'dispatch_deadline' => $dispatchDeadline,
+            'delivery_date' => $deliveryDate
+        ];
         $updated = $this->orderModel->updateCrmOrderDetails( $orderId, $orderSource, $dispatchDeadline, $deliveryDate );
     
         if (!$updated) {
@@ -780,7 +802,19 @@ class Orders extends WSController
                     'message' => 'CRM details could not be updated.'
                 ]);
         }
-    
+        // Record CRM history.
+        $createdBy = (int) session()->get('user_id');
+        $username = (string) (session()->get('username') ?? '');
+
+        $this->orderModel->addOrderHistory(
+            $orderId,
+            $createdBy,
+            $username,
+            'crm_details_updated',
+            'CRM order details updated.',
+            $oldValue,
+            $newValue
+        );
         return $this->response
             ->setJSON([
                 'success' => true,
@@ -814,7 +848,31 @@ class Orders extends WSController
                     'message' => 'Please enter a valid email address.'
                 ]);
         }
-    
+        // Get existing customer details before updating.
+        $oldOrder = $this->orderModel->getOrder($orderId);
+
+        if (!$oldOrder) {
+            return $this->response
+                ->setStatusCode(404)
+                ->setJSON([
+                    'success' => false,
+                    'message' => 'Order not found.'
+                ]);
+        }
+
+        $oldValue = [
+            'firstname' => $oldOrder['customer_firstname'] ?? '',
+            'lastname' => $oldOrder['customer_lastname'] ?? '',
+            'email' => $oldOrder['customer_email'] ?? '',
+            'telephone' => $oldOrder['customer_telephone'] ?? ''
+        ];
+
+        $newValue = [
+            'firstname' => $firstname,
+            'lastname' => $lastname,
+            'email' => $email,
+            'telephone' => $telephone
+        ];
         $updated =
             $this->orderModel->updateCustomerDetails( $orderId, $firstname, $lastname, $email, $telephone );
     
@@ -827,7 +885,19 @@ class Orders extends WSController
                     'message' => 'Customer details could not be updated.'
                 ]);
         }
-    
+        // Record CRM history.
+        $createdBy = (int) session()->get('user_id');
+        $username = (string) (session()->get('username') ?? '');
+
+        $this->orderModel->addOrderHistory(
+            $orderId,
+            $createdBy,
+            $username,
+            'customer_updated',
+            'Customer details updated.',
+            $oldValue,
+            $newValue
+        );
         return $this->response
             ->setJSON([
                 'success' => true,
@@ -852,7 +922,18 @@ class Orders extends WSController
                 ]);
         }
     
-    
+        // Get existing order status before updating.
+        $oldOrder = $this->orderModel->getOrder($orderId);
+
+        if (!$oldOrder) {
+            return $this->response
+                ->setStatusCode(404)
+                ->setJSON([
+                    'success' => false,
+                    'message' => 'Order not found.'
+                ]);
+        }
+
         $updated = $this->orderModel->updateStatusDetails($orderId, $orderstatusid, $comment);
     
         if (!$updated) {
@@ -864,7 +945,35 @@ class Orders extends WSController
                     'message' => 'order status could not be updated.'
                 ]);
         }
+        
+        // Get updated status.
+        $newOrder = $this->orderModel->getOrder($orderId);
+        
+        // Record CRM history.
+        $createdBy = (int) session()->get('user_id');
+        $username = (string) (session()->get('username') ?? '');
+        
+        $oldValue = [
+            'order_status_id' => $oldOrder['order_status_id'],
+            'status' => $oldOrder['order_status'] ?? ''
+        ];
     
+        $newValue = [
+            'order_status_id' => $orderstatusid,
+            'status' => $newOrder['order_status'] ?? '',
+            'comment' => $comment
+        ];
+    
+        $this->orderModel->addOrderHistory(
+            $orderId,
+            $createdBy,
+            $username,
+            'status_updated',
+            'Order status changed from ' . ($oldOrder['order_status'] ?? '-') . ' to ' . ($newOrder['order_status'] ?? '-') . '.',
+            $oldValue,
+            $newValue
+        );
+
         return $this->response
             ->setJSON([
                 'success' => true,
@@ -1186,7 +1295,95 @@ class Orders extends WSController
             'payment_due' => $paymentDue
         ]);
     }
+    private function updatePaymentAddressSection(int $orderId) {
 
+        $address = [
+            'firstname'  => trim((string) $this->request->getPost('firstname')),
+            'lastname'   => trim((string) $this->request->getPost('lastname')),
+            'company'    => trim((string) $this->request->getPost('company')),
+            'address_1'  => trim((string) $this->request->getPost('address_1')),
+            'address_2'  => trim((string) $this->request->getPost('address_2')),
+            'city'       => trim((string) $this->request->getPost('city')),
+            'postcode'   => trim((string) $this->request->getPost('postcode')),
+            'zone'       => trim((string) $this->request->getPost('zone')),
+            'country'    => trim((string) $this->request->getPost('country'))
+        ];
+    
+        if (
+            $address['firstname'] === '' ||
+            $address['address_1'] === '' ||
+            $address['city'] === '' ||
+            $address['country'] === ''
+        ) {
+            return $this->response
+                ->setStatusCode(400)
+                ->setJSON([
+                    'success' => false,
+                    'message' => 'Please fill all required payment address fields.'
+                ]);
+        }
+    
+        if (!$this->orderModel->updateOrderAddress($orderId, 'payment', $address)) {
+            return $this->response
+                ->setStatusCode(500)
+                ->setJSON([
+                    'success' => false,
+                    'message' => 'Unable to update payment address.'
+                ]);
+        }
+    
+        return $this->response->setJSON([
+            'success' => true,
+            'section' => 'payment-address',
+            'address' => $address,
+            'message' => 'Payment address updated successfully.'
+        ]);
+    }
+    
+    private function updateShippingAddressSection(int $orderId) {
+    
+        $address = [
+            'firstname'  => trim((string) $this->request->getPost('firstname')),
+            'lastname'   => trim((string) $this->request->getPost('lastname')),
+            'company'    => trim((string) $this->request->getPost('company')),
+            'address_1'  => trim((string) $this->request->getPost('address_1')),
+            'address_2'  => trim((string) $this->request->getPost('address_2')),
+            'city'       => trim((string) $this->request->getPost('city')),
+            'postcode'   => trim((string) $this->request->getPost('postcode')),
+            'zone'       => trim((string) $this->request->getPost('zone')),
+            'country'    => trim((string) $this->request->getPost('country'))
+        ];
+    
+        if (
+            $address['firstname'] === '' ||
+            $address['address_1'] === '' ||
+            $address['city'] === '' ||
+            $address['country'] === ''
+        ) {
+            return $this->response
+                ->setStatusCode(400)
+                ->setJSON([
+                    'success' => false,
+                    'message' => 'Please fill all required shipping address fields.'
+                ]);
+        }
+    
+        if (!$this->orderModel->updateOrderAddress($orderId, 'shipping', $address)) {
+            return $this->response
+                ->setStatusCode(500)
+                ->setJSON([
+                    'success' => false,
+                    'message' => 'Unable to update shipping address.'
+                ]);
+        }
+    
+        return $this->response->setJSON([
+            'success' => true,
+            'section' => 'shipping-address',
+            'address' => $address,
+            'message' => 'Shipping address updated successfully.'
+        ]);
+    }
     private function removeProductSection(int $orderId){
         $orderProductId = (int) $this->request->getPost( 'order_product_id' );
 

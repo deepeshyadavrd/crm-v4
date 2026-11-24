@@ -527,8 +527,12 @@
 
         <!-- Order History -->
         <div class="card mb-4">
-            <div class="card-header">
+            <div class="card-header d-flex justify-content-between align-items-center">
                 <strong>Order History</strong>
+                <a href="<?= site_url('orders/history/' . $order['order_id']) ?>"
+                    class="btn btn-sm btn-outline-primary">
+                    View Full History
+                </a>
             </div>
             <div class="card-body p-0">
                 <?php if ($history): ?>
@@ -549,7 +553,7 @@
                                             <?= esc($item['date_added']) ?>
                                         </td>
                                         <td>
-                                            <?= esc($item['status']?? '-') ?>
+                                            <?= esc($item['status_name']?? '-') ?>
                                         </td>
                                         <td>
                                             <?= esc($item['comment']?? '-') ?>
@@ -961,13 +965,13 @@ document.getElementById('editShippingLastname').value =
     document.getElementById('shipping-lastname').textContent.trim();
 
 document.getElementById('editShippingCompany').value =
-    document.getElementById('shipping-company').textContent.trim();
+    document.getElementById('shipping-company')?.textContent.trim() ?? '';
 
 document.getElementById('editShippingAddress1').value =
     document.getElementById('shipping-address-1').textContent.trim();
 
 document.getElementById('editShippingAddress2').value =
-    document.getElementById('shipping-address-2').textContent.trim();
+    document.getElementById('shipping-address-2')?.textContent.trim() ?? '';
 
 document.getElementById('editShippingCity').value =
     document.getElementById('shipping-city').textContent.trim();
@@ -1359,7 +1363,18 @@ delete button.dataset.loading;
 
         setText('product-vendor-price-' + id, data.vendor_price !== null && data.vendor_price !== '' ? formatMoney(data.vendor_price) : '-' );
     }
+    function updateAddressDisplay(prefix, address) {
 
+        setText(prefix + '-firstname', address.firstname || '');
+        setText(prefix + '-lastname', address.lastname || '');
+        setText(prefix + '-company', address.company || '');
+        setText(prefix + '-address-1', address.address_1 || '');
+        setText(prefix + '-address-2', address.address_2 || '');
+        setText(prefix + '-city', address.city || '');
+        setText(prefix + '-postcode', address.postcode || '');
+        setText(prefix + '-zone', address.zone || '');
+        setText(prefix + '-country', address.country || '');
+    }
     /* Handle all successful AJAX responses. */
     function handleOrderResponse(data) {
         if (data.section === 'crm') {
@@ -1437,6 +1452,17 @@ delete button.dataset.loading;
 
             updateOrderAmounts(data);
             showSuccessToast(data.message || 'Product removed successfully.');
+        }
+        if (data.section === 'payment-address') {
+
+            updateAddressDisplay('payment', data.address);
+            showSuccessToast(data.message || 'Payment address updated successfully.');
+        }
+
+        if (data.section === 'shipping-address') {
+        
+            updateAddressDisplay('shipping', data.address);
+            showSuccessToast(data.message || 'Shipping address updated successfully.');
         }
 
         /* Close the modal after a successful form submission. */

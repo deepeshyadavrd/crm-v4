@@ -307,7 +307,18 @@ class OrderModel extends Model {
             ->get()
             ->getResultArray();
     }
-
+    /* RECENT ORDER HISTORY */
+    public function getRecentOrderHistory(int $orderId): array {
+        return $this->db
+            ->table('oc_order_history oh')
+            ->select(['oh.*', 'os.name AS status_name'])
+            ->join('oc_order_status os', 'os.order_status_id = oh.order_status_id', 'left')
+            ->where('oh.order_id', $orderId)
+            ->orderBy('oh.date_added', 'DESC')
+            ->limit(6)
+            ->get()
+            ->getResultArray();
+    }
     /* CREATE ORDER */
     public function createOrder(array $orderData, int $createdBy): int {
         if ($createdBy <= 0) {
@@ -1609,5 +1620,80 @@ class OrderModel extends Model {
 
             return false;
         }
+    }
+
+    public function updateOrderAddress(int $orderId, string $type, array $address): bool {
+
+        if (!in_array($type, ['payment', 'shipping'], true)) {
+            return false;
+        }
+    
+        $prefix = $type . '_';
+    
+        /* Find country ID. */
+        $country = $this->db
+            ->table('oc_country')
+            ->select('country_id')
+            ->where('name', $address['country'])
+            ->get()
+            ->getRowArray();
+    
+        $countryId = $country['country_id'] ?? 0;
+    
+        /* Find zone ID. */
+        $zone = $this->db
+            ->table('oc_zone')
+            ->select('zone_id')
+            ->where('country_id', $countryId)
+            ->where('name', $address['zone'])
+            ->get()
+            ->getRowArray();
+    
+        $zoneId = $zone['zone_id'] ?? 0;
+    
+        return $this->db
+            ->table('oc_order')
+            ->where('order_id', $orderId)
+            ->update([
+                $prefix . 'firstname'   => $address['firstname'],
+                $prefix . 'lastname'    => $address['lastname'],
+                $prefix . 'company'     => $address['company'],
+                $prefix . 'address_1'   => $address['address_1'],
+                $prefix . 'address_2'   => $address['address_2'],
+                $prefix . 'city'        => $address['city'],
+                $prefix . 'postcode'    => $address['postcode'],
+                $prefix . 'zone'        => $address['zone'],
+                $prefix . 'zone_id'     => $zoneId,
+                $prefix . 'country'     => $address['country'],
+                $prefix . 'country_id'  => $countryId
+            ]);
+    }
+
+    public function addOrderHistory(
+        int $orderId,
+        int $userId,
+        string $username,
+        string $action,
+        string $description,
+        ?array $oldValue = null,
+        ?array $newValue = null
+    ): bool {
+    
+        return $this->db
+            ->table('oc_crm_order_history')
+            ->insert([
+                'order_id'   => $orderId,
+                'user_id'    => $userId,
+                'username'   => $username,
+                'action'     => $action,
+                'description' => $description,
+                'old_value'  => $oldValue !== null
+                    ? json_encode($oldValue, JSON_UNESCAPED_UNICODE)
+                    : null,
+                'new_value'  => $newValue !== null
+                    ? json_encode($newValue, JSON_UNESCAPED_UNICODE)
+                    : null,
+                'date_added' => date('Y-m-d H:i:s')
+            ]);
     }
 }
